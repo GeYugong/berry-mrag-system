@@ -78,3 +78,32 @@
 
 ### 已知问题
 - `requirements.txt` 中依赖安装仍受当前环境网络/代理限制影响，运行级验证需在可联网环境完成。
+
+### 下一步任务
+1. 在 `UPDATE_LOG.md` 的后续每条记录中固定增加“下一步任务”小节并保持可执行、可验证。
+
+---
+
+## 2026-03-02 第 3 次更新
+
+- 执行者：Codex
+- 更新类型：规范调整（更新日志约定）
+
+### 更新内容
+1. 更新 `PROJECT_SPEC.md` 中 `Update Log Policy`：
+   - 在“Entry content requirement”中新增强制项：`next-step task for the following update cycle`。
+   - 要求每次更新日志都必须包含下一步任务说明。
+
+### 涉及文件/模块
+- `PROJECT_SPEC.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 文档内容检查通过：`PROJECT_SPEC.md` 已包含“next-step task”要求。
+- 本次日志记录已按新规范写入“下一步任务”。
+
+### 已知问题
+- 暂无新增问题。
+
+### 下一步任务
+1. 后续代码变更完成后，继续按新规范记录日志并明确下一次可执行任务。

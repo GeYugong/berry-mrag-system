@@ -95,10 +95,10 @@ berry-mrag-system/
 
 ## 6. Update Log Policy (Mandatory)
 
-All implementation updates completed by Codex must be recorded in a persistent changelog file.
+All implementation updates completed by agent must be recorded in a persistent changelog file.
 
 - **Changelog file**: `UPDATE_LOG.md` at repository root.
-- **Author requirement**: each entry must explicitly state it was written by **Codex**.
+- **Author requirement**: each entry must explicitly state it was written by **who**.
 - **Append-only rule**: new updates must be appended; do **not** overwrite, delete, or rewrite previous entries.
 - **Entry content requirement**: each update entry should include at least:
   - date/time
@@ -107,8 +107,9 @@ All implementation updates completed by Codex must be recorded in a persistent c
   - touched files/modules
   - validation/test results
   - known issues or follow-up items
+  - next-step task for the following update cycle
 
-When Codex finishes a coding change, updating `UPDATE_LOG.md` is part of the definition of done.
+When agent finishes a coding change, updating `UPDATE_LOG.md` is part of the definition of done.
 
 
 
