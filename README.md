@@ -133,56 +133,88 @@ curl -X POST "http://127.0.0.1:8000/api/diagnose" \
 ```mermaid
 flowchart TB
 
+%% ===== Styles (colors) =====
+classDef offline fill:#E8F5E9,stroke:#2E7D32,stroke-width:1px,color:#1B5E20;
+classDef online  fill:#E3F2FD,stroke:#1565C0,stroke-width:1px,color:#0D47A1;
+classDef infer   fill:#FFF3E0,stroke:#EF6C00,stroke-width:1px,color:#E65100;
+classDef rag     fill:#F3E5F5,stroke:#6A1B9A,stroke-width:1px,color:#4A148C;
+classDef gen     fill:#E0F7FA,stroke:#00838F,stroke-width:1px,color:#006064;
+classDef edge    fill:#FFEBEE,stroke:#C62828,stroke-width:1px,color:#B71C1C;
+classDef io      fill:#F5F5F5,stroke:#424242,stroke-width:1px,color:#212121;
+classDef decision fill:#FFFDE7,stroke:#9E9D24,stroke-width:1px,color:#827717;
+
 subgraph OFFLINE[离线阶段 知识库准备]
   DS[数据源 病虫害知识文本 手册 图文资料] --> CLEAN[清洗 切分 分块]
   CLEAN --> EMB_KB[向量化 生成向量]
   EMB_KB --> STORE[知识库 当前实现为内置列表 未来可接向量库]
 end
+class DS,CLEAN,EMB_KB,STORE offline;
 
 subgraph ONLINE[在线阶段 服务启动]
   CFG[读取配置 Settings APP_NAME APP_VERSION DEBUG TOP_K] --> APP[创建 FastAPI 应用]
   APP --> ROUTER[挂载路由 前缀 api]
 end
+class CFG,APP,ROUTER online;
 
 U[用户] --> FE[前端或调用方]
 FE --> EP[POST api diagnose]
+class U,FE,EP io;
 
 EP --> VAL[解析请求 DiagnoseRequest]
 VAL --> INF[视觉诊断 run_inference]
+class VAL infer;
+class INF infer;
 
 INF --> B0{image_path 是否为空}
+class B0 decision;
+
 B0 -- 是 --> D0[默认检测结果 unknown 0.51 bbox 0 0 100 100]
 B0 -- 否 --> GUESS[按文件名猜测病害类型]
+class D0,GUESS infer;
+
 GUESS --> B1{关键词匹配}
+class B1 decision;
+
 B1 -- whitepowder --> D1[powdery_mildew 0.88 bbox 42 56 260 300]
 B1 -- aphid --> D2[aphid 0.88 bbox 42 56 260 300]
 B1 -- graymold --> D3[gray_mold 0.88 bbox 42 56 260 300]
 B1 -- none --> D4[unknown_leaf_issue 0.62 bbox 42 56 260 300]
+class D1,D2,D3,D4 infer;
 
 D0 --> DET[DetectionResult]
 D1 --> DET
 D2 --> DET
 D3 --> DET
 D4 --> DET
+class DET infer;
 
 DET --> QBUILD[构造 query_text 由用户问题加 pest_type]
 QBUILD --> EMBQ[embed_text 生成查询向量 dim 16]
 EMBQ --> RET[search 检索 top_k 来自 Settings]
+class QBUILD,EMBQ,RET rag;
 
 STORE -. 提供知识条目 .-> RET
-RET --> TOPK[按余弦相似度排序 取 TopK]
 
+RET --> TOPK[按余弦相似度排序 取 TopK]
 TOPK --> RER[rerank 重排]
+class TOPK,RER rag;
+
 RER --> B2{标题命中 pest_hint}
+class B2 decision;
+
 B2 -- 是 --> PLUS[score 加 0.08]
 B2 -- 否 --> KEEP[score 不变]
+class PLUS,KEEP rag;
+
 PLUS --> SORT2[重新排序]
 KEEP --> SORT2
+class SORT2 rag;
 
 SORT2 --> GEN[生成报告 generate_markdown_report]
 GEN --> RESP[DiagnoseResponse detection retrieved answer_markdown]
 RESP --> FE
 FE --> U
+class GEN,RESP gen;
 
 subgraph EDGE[边界情况 逻辑提示]
   E1[query 缺失 会被校验拦截]
@@ -190,6 +222,7 @@ subgraph EDGE[边界情况 逻辑提示]
   E3[当前不真正读取图片 仅用文件名模拟]
   E4[接真模型需增加 上传存储 模型加载 向量库管理]
 end
+class E1,E2,E3,E4 edge;
 
 VAL -. 可能触发 .-> E1
 TOPK -. 可能表现 .-> E2
