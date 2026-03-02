@@ -127,3 +127,72 @@ curl -X POST "http://127.0.0.1:8000/api/diagnose" \
   -H "Content-Type: application/json" \
   -d "{\"query\":\"草莓叶片有白色粉末怎么办\",\"image_path\":\"demo_powder.jpg\"}"
 ```
+
+## 🔁 系统流程图
+
+```mermaid
+flowchart TB
+
+subgraph OFFLINE[离线阶段 知识库准备]
+  DS[数据源 病虫害知识文本 手册 图文资料] --> CLEAN[清洗 切分 分块]
+  CLEAN --> EMB_KB[向量化 生成向量]
+  EMB_KB --> STORE[知识库 当前实现为内置列表 未来可接向量库]
+end
+
+subgraph ONLINE[在线阶段 服务启动]
+  CFG[读取配置 Settings APP_NAME APP_VERSION DEBUG TOP_K] --> APP[创建 FastAPI 应用]
+  APP --> ROUTER[挂载路由 前缀 api]
+end
+
+U[用户] --> FE[前端或调用方]
+FE --> EP[POST api diagnose]
+
+EP --> VAL[解析请求 DiagnoseRequest]
+VAL --> INF[视觉诊断 run_inference]
+
+INF --> B0{image_path 是否为空}
+B0 -- 是 --> D0[默认检测结果 unknown 0.51 bbox 0 0 100 100]
+B0 -- 否 --> GUESS[按文件名猜测病害类型]
+GUESS --> B1{关键词匹配}
+B1 -- whitepowder --> D1[powdery_mildew 0.88 bbox 42 56 260 300]
+B1 -- aphid --> D2[aphid 0.88 bbox 42 56 260 300]
+B1 -- graymold --> D3[gray_mold 0.88 bbox 42 56 260 300]
+B1 -- none --> D4[unknown_leaf_issue 0.62 bbox 42 56 260 300]
+
+D0 --> DET[DetectionResult]
+D1 --> DET
+D2 --> DET
+D3 --> DET
+D4 --> DET
+
+DET --> QBUILD[构造 query_text 由用户问题加 pest_type]
+QBUILD --> EMBQ[embed_text 生成查询向量 dim 16]
+EMBQ --> RET[search 检索 top_k 来自 Settings]
+
+STORE -. 提供知识条目 .-> RET
+RET --> TOPK[按余弦相似度排序 取 TopK]
+
+TOPK --> RER[rerank 重排]
+RER --> B2{标题命中 pest_hint}
+B2 -- 是 --> PLUS[score 加 0.08]
+B2 -- 否 --> KEEP[score 不变]
+PLUS --> SORT2[重新排序]
+KEEP --> SORT2
+
+SORT2 --> GEN[生成报告 generate_markdown_report]
+GEN --> RESP[DiagnoseResponse detection retrieved answer_markdown]
+RESP --> FE
+FE --> U
+
+subgraph EDGE[边界情况 逻辑提示]
+  E1[query 缺失 会被校验拦截]
+  E2[知识库很小 命中弱 报告更泛]
+  E3[当前不真正读取图片 仅用文件名模拟]
+  E4[接真模型需增加 上传存储 模型加载 向量库管理]
+end
+
+VAL -. 可能触发 .-> E1
+TOPK -. 可能表现 .-> E2
+INF -. 现状说明 .-> E3
+RET -. 未来扩展 .-> E4
+```
