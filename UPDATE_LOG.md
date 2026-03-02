@@ -107,3 +107,69 @@
 
 ### 下一步任务
 1. 后续代码变更完成后，继续按新规范记录日志并明确下一次可执行任务。
+
+---
+
+## 2026-03-02 第 4 次更新
+
+- 执行者：Codex
+- 更新类型：环境依赖安装与运行级接口验证
+
+### 更新内容
+1. 在当前终端会话配置代理并安装依赖：
+   - `HTTP_PROXY=http://127.0.0.1:7897`
+   - `HTTPS_PROXY=http://127.0.0.1:7897`
+   - 执行 `pip install -r requirements.txt` 成功安装 `fastapi/uvicorn/pydantic` 及依赖。
+2. 完成真实 HTTP 运行级验证：
+   - 通过 Python 子进程启动 `uvicorn backend.main:app`。
+   - 调用 `GET /api/health` 与 `POST /api/diagnose` 验证成功。
+   - 诊断链路返回 `powdery_mildew` 检测结果与检索列表。
+
+### 涉及文件/模块
+- 无代码文件改动（本次为环境与运行验证）
+- 日志文件：`UPDATE_LOG.md`
+
+### 验证结果
+- 依赖安装：成功。
+- 接口验证：成功。
+  - `/api/health` 返回 `status=ok`
+  - `/api/diagnose` 返回诊断结果与 3 条检索结果
+
+### 已知问题
+- 当前测试为占位逻辑，尚未接入真实 YOLOv8、FAISS/Milvus、MLLM。
+
+### 下一步任务
+1. 将 `rag_module/retriever.py` 从内置知识库升级为基于本地 `data/chunks` 的可持久化检索实现（优先 FAISS）。
+
+---
+
+## 2026-03-02 第 5 次更新
+
+- 执行者：Codex
+- 更新类型：开发清单完善（To-Do）
+
+### 更新内容
+1. 在 `DEV_NOTES.md` 新增“完整 To-Do List（执行清单）”章节。
+2. To-Do 按优先级与模块拆分，覆盖：
+   - P0 主链路打通
+   - 数据工程
+   - YOLO 专项（重点，含训练/评估/推理/性能）
+   - RAG 专项
+   - 后端工程化
+   - 前端交互
+   - 质量与交付
+3. 补充“下一次开发建议（短期）”，便于直接进入执行。
+
+### 涉及文件/模块
+- `DEV_NOTES.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 文档更新完成，`DEV_NOTES.md` 已包含完整 To-Do 清单。
+- 清单与当前仓库结构保持一致，未引入不存在的路径引用。
+
+### 已知问题
+- To-Do 中多项能力依赖真实数据与模型资源，当前仍为占位实现阶段。
+
+### 下一步任务
+1. 开始执行 To-Do 的第一项工程任务：新增 `visual_module/train_yolo.py` 并接入真实 YOLO 推理流程。
