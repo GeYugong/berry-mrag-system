@@ -32,14 +32,18 @@
 
 ```text
 berry-mrag-system/
-├── data/                  # 多模态数据集（视觉图像、文本知识块 chunks、传感器数据等）
-├── docs/                  # 团队知识库（支持通过 Obsidian 结合 GitHub 进行 Markdown 知识同步）与项目文档
-├── visual_module/         # 第一阶段：高精度视觉诊断模块 (YOLOv8 微调与推理代码) 
-├── rag_module/            # 第二阶段：多模态检索增强生成模块 (CLIP 编码、向量召回、重排、MLLM 交互) 
-├── backend/               # 后端服务 API 集成 
-├── frontend/              # 简洁直观的 Web 前端应用程序 
+├── data/
+│   ├── raw/               # 原始数据（预留）
+│   ├── processed/         # 处理后数据（预留）
+│   ├── chunks/            # 文本块数据（预留）
+│   └── vector_store/      # 向量库存储（预留）
+├── docs/                  # 项目文档
+├── visual_module/         # 视觉诊断模块
+├── rag_module/            # 检索增强生成模块
+├── backend/               # FastAPI 后端服务
+├── frontend/              # 前端目录（预留）
 ├── requirements.txt       # 环境依赖
-└── README.md              # 项目说明文档
+└── UPDATE_LOG.md          # Codex 追加式更新日志
 
 ```
 
@@ -64,7 +68,7 @@ pip install -r requirements.txt
 
 ```
 
-*(注：API 密钥及数据库配置请参考 `backend/.env.example` 文件进行本地设置)*
+*(注：当前仓库尚未提供 `.env.example`，如需引入外部 API 密钥，请在后续版本补充配置模板并在此处更新说明。)*
 
 
 

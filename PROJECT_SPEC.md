@@ -45,8 +45,6 @@ berry-mrag-system/
 │   └── vector_store/        # FAISS index or Milvus config
 ├── docs/                    # System documentation and Obsidian Markdown notes
 ├── visual_module/
-│   ├── preprocessor.py      # OpenCV scripts for scale, color, and segmentation
-│   ├── train_yolo.py        # YOLOv8 fine-tuning script
 │   └── inference.py         # YOLOv8 inference returning labels and boxes
 ├── rag_module/
 │   ├── embedder.py          # CLIP encoding logic
@@ -56,10 +54,11 @@ berry-mrag-system/
 ├── backend/
 │   ├── main.py              # FastAPI application entry point
 │   ├── api_routes.py        # Endpoints for frontend integration
-│   └── config.py            # Environment variables and API keys
+│   ├── schemas.py           # Request/response data models
+│   └── config.py            # App runtime settings
 ├── frontend/                # Web UI components
 ├── requirements.txt
-└── AI_CONTEXT.md            # This file
+└── PROJECT_SPEC.md          # This file
 
 ```
 
