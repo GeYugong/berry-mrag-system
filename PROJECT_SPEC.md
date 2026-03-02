@@ -94,5 +94,22 @@ berry-mrag-system/
 4. 
 **Backend -> Frontend**: MLLM generates the final structured report (pesticide recommendation, dosage, alternative methods) and sends it back to the UI.
 
+## 6. Update Log Policy (Mandatory)
+
+All implementation updates completed by Codex must be recorded in a persistent changelog file.
+
+- **Changelog file**: `UPDATE_LOG.md` at repository root.
+- **Author requirement**: each entry must explicitly state it was written by **Codex**.
+- **Append-only rule**: new updates must be appended; do **not** overwrite, delete, or rewrite previous entries.
+- **Entry content requirement**: each update entry should include at least:
+  - date/time
+  - executor
+  - summary of changes
+  - touched files/modules
+  - validation/test results
+  - known issues or follow-up items
+
+When Codex finishes a coding change, updating `UPDATE_LOG.md` is part of the definition of done.
+
 
 

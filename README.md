@@ -102,3 +102,24 @@ pip install -r requirements.txt
 
 
 
+
+## 当前可运行版本（MVP 骨架）
+
+已提供可运行的后端最小链路：
+- `POST /api/diagnose`：接收文本问题和可选图片路径，返回诊断结果、检索结果与 Markdown 建议。
+- `GET /api/health`：服务健康检查。
+
+启动方式：
+
+```bash
+pip install -r requirements.txt
+uvicorn backend.main:app --reload --port 8000
+```
+
+调用示例：
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/diagnose" \
+  -H "Content-Type: application/json" \
+  -d "{\"query\":\"草莓叶片有白色粉末怎么办\",\"image_path\":\"demo_powder.jpg\"}"
+```
