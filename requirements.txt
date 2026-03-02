@@ -1,0 +1,2 @@
+# Core dependencies for berry-mrag-system
+# Add or pin versions as each module matures.
