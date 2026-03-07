@@ -34,4 +34,4 @@ def generate_markdown_report(
             "3. 3-5 天后复查并记录，必要时调整防治策略。",
         ]
     )
-    return "\n".join(lines)
+    return "\n".join(lines)#AFAF
