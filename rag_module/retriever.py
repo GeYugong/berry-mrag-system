@@ -32,10 +32,26 @@ def _cosine_similarity(a: List[float], b: List[float]) -> float:
     return dot / (norm_a * norm_b)
 
 
-def search(query_vector: List[float], top_k: int = 3) -> List[Dict[str, Union[str, float]]]:
+def search(
+    query_vector: List[float],
+    top_k: int = 3,
+    embedding_enabled: bool = True,
+    embedding_model: str = "qwen3-vl-embedding",
+    embedding_api_url: str = "",
+    embedding_api_key: str = "",
+    embedding_timeout: float = 20.0,
+) -> List[Dict[str, Union[str, float]]]:
     scored: List[Dict[str, Union[str, float]]] = []
     for item in KNOWLEDGE_BASE:
-        item_vec = embed_text(item["title"] + item["content"], dim=len(query_vector))
+        item_vec = embed_text(
+            item["title"] + item["content"],
+            dim=len(query_vector),
+            enabled=embedding_enabled,
+            model=embedding_model,
+            api_url=embedding_api_url or None,
+            api_key=embedding_api_key or None,
+            timeout=embedding_timeout,
+        )
         score = _cosine_similarity(query_vector, item_vec)
         scored.append({**item, "score": round(score, 4)})
 

@@ -21,6 +21,21 @@ class Settings:
     yolo_weights_path: str = os.getenv("YOLO_WEIGHTS_PATH", "").strip()
     yolo_conf_threshold: float = float(os.getenv("YOLO_CONF_THRESHOLD", "0.25"))
     yolo_iou_threshold: float = float(os.getenv("YOLO_IOU_THRESHOLD", "0.45"))
+    embedding_enabled: bool = _as_bool("EMBEDDING_ENABLED", "true")
+    embedding_model: str = os.getenv("EMBEDDING_MODEL", "qwen3-vl-embedding").strip()
+    embedding_api_url: str = os.getenv(
+        "EMBEDDING_API_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings"
+    ).strip()
+    embedding_api_key: str = os.getenv(
+        "EMBEDDING_API_KEY", os.getenv("DASHSCOPE_API_KEY", "")
+    ).strip()
+    embedding_timeout: float = float(os.getenv("EMBEDDING_API_TIMEOUT", "20"))
+    llm_enabled: bool = _as_bool("LLM_ENABLED", "true")
+    llm_model: str = os.getenv("LLM_MODEL", "gemini-2.0-flash").strip()
+    llm_api_key: str = os.getenv("LLM_API_KEY", os.getenv("GEMINI_API_KEY", "")).strip()
+    llm_api_url: str = os.getenv("LLM_API_URL", "").strip()
+    llm_timeout: float = float(os.getenv("LLM_API_TIMEOUT", "30"))
+    llm_temperature: float = float(os.getenv("LLM_TEMPERATURE", "0.2"))
 
 
 settings = Settings()

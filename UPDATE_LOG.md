@@ -286,3 +286,46 @@
 ### 下一步任务
 1. 新增 `.env.example` 并写入 API 传图开关说明。
 2. 提供一个最小 YOLO API mock 示例，便于快速联调。
+
+---
+
+## 2026-03-09 第 9 次更新
+
+- 执行者：Codex
+- 更新类型：接入外部 Embedding 与 LLM API（Qwen + Gemini）
+
+### 更新内容
+1. 新增全局配置项（`backend/config.py`）：
+   - Embedding：`EMBEDDING_ENABLED`、`EMBEDDING_MODEL`、`EMBEDDING_API_URL`、`EMBEDDING_API_KEY`、`EMBEDDING_API_TIMEOUT`。
+   - LLM：`LLM_ENABLED`、`LLM_MODEL`、`LLM_API_KEY`、`LLM_API_URL`、`LLM_API_TIMEOUT`、`LLM_TEMPERATURE`。
+2. 接入阿里 Embedding API（`rag_module/embedder.py`）：
+   - 新增 HTTP 调用逻辑（OpenAI-compatible 响应优先，兼容 DashScope `output.embeddings` 结构）。
+   - 新增内存缓存，减少重复文本的 API 调用。
+   - 未配置 key/url 或 API 异常时自动回退到哈希向量占位逻辑。
+3. 检索链路接线（`rag_module/retriever.py` + `backend/api_routes.py`）：
+   - `search` 新增 embedding 参数透传，使 query 与知识条目向量使用同一模型配置。
+4. 接入 Gemini 生成（`rag_module/mllm_generator.py`）：
+   - 新增 Gemini `generateContent` 调用逻辑。
+   - 构造结构化 Prompt（诊断结论、处置步骤、用药与安全、复查计划、依据引用）。
+   - API 异常或未配置 key 时自动回退模板生成。
+
+### 涉及文件/模块
+- `backend/config.py`
+- `backend/api_routes.py`
+- `rag_module/embedder.py`
+- `rag_module/retriever.py`
+- `rag_module/mllm_generator.py`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法级验证：对上述 Python 文件执行无落盘编译检查，通过。
+- 最小链路验证：在无 API key 场景调用 `diagnose`，服务可返回结果（走兜底逻辑）。
+
+### 已知问题
+- 当前知识库仍为内置 3 条样例，外部 embedding/LLM 接入后效果受语料规模限制明显。
+- 若设置 `EMBEDDING_MODEL=qwen3-vl-embedding`，需确保你的 DashScope 账号已开通该模型权限。
+
+### 下一步任务
+1. 新增 `.env.example` 并补充 Qwen/Gemini 配置模板。
+2. 增加 API 连通性与响应结构校验日志，便于排障。
+3. 将 `data/chunks` 落地并替换内置知识库，实现真实检索。

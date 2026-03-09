@@ -31,10 +31,35 @@ def diagnose(req: DiagnoseRequest) -> DiagnoseResponse:
         iou_threshold=settings.yolo_iou_threshold,
     )
     query_text = f"{req.query} {detection['pest_type']}"
-    query_vector = embed_text(query_text)
-    retrieved = search(query_vector, top_k=settings.top_k)
+    query_vector = embed_text(
+        query_text,
+        enabled=settings.embedding_enabled,
+        model=settings.embedding_model,
+        api_url=settings.embedding_api_url or None,
+        api_key=settings.embedding_api_key or None,
+        timeout=settings.embedding_timeout,
+    )
+    retrieved = search(
+        query_vector,
+        top_k=settings.top_k,
+        embedding_enabled=settings.embedding_enabled,
+        embedding_model=settings.embedding_model,
+        embedding_api_url=settings.embedding_api_url,
+        embedding_api_key=settings.embedding_api_key,
+        embedding_timeout=settings.embedding_timeout,
+    )
     reranked = rerank(retrieved, pest_type=str(detection["pest_type"]))
-    answer = generate_markdown_report(req.query, detection, reranked)
+    answer = generate_markdown_report(
+        req.query,
+        detection,
+        reranked,
+        llm_enabled=settings.llm_enabled,
+        llm_model=settings.llm_model,
+        llm_api_key=settings.llm_api_key,
+        llm_api_url=settings.llm_api_url,
+        llm_timeout=settings.llm_timeout,
+        llm_temperature=settings.llm_temperature,
+    )
 
     return DiagnoseResponse(
         detection=detection,  # type: ignore[arg-type]
