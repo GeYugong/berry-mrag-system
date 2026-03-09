@@ -173,3 +173,116 @@
 
 ### 下一步任务
 1. 开始执行 To-Do 的第一项工程任务：新增 `visual_module/train_yolo.py` 并接入真实 YOLO 推理流程。
+
+---
+
+## 2026-03-09 第 6 次更新
+
+- 执行者：Codex
+- 更新类型：接入 YOLOv8 推理（含降级兜底）
+
+### 更新内容
+1. 升级视觉推理模块，新增真实 YOLOv8 推理路径：
+   - `visual_module/inference.py` 支持通过 `model_path/conf_threshold/iou_threshold` 参数执行 `ultralytics.YOLO.predict`。
+   - 统一输出结构仍为 `pest_type/confidence/bbox`，保持 `POST /api/diagnose` 协议不变。
+   - 新增模型对象缓存，避免重复加载权重。
+2. 增加健壮性与降级策略：
+   - 权重未配置、权重文件不存在、依赖缺失、推理异常等场景会自动降级到原占位规则推理，保证接口可用。
+   - 图片不存在时记录 warning 并降级处理。
+3. 后端配置与路由联动：
+   - `backend/config.py` 新增 `YOLO_WEIGHTS_PATH`、`YOLO_CONF_THRESHOLD`、`YOLO_IOU_THRESHOLD` 配置项。
+   - `backend/api_routes.py` 在调用 `run_inference` 时传入上述配置。
+4. 依赖更新：
+   - `requirements.txt` 新增 `ultralytics>=8.3,<9.0`。
+
+### 涉及文件/模块
+- `visual_module/inference.py`
+- `backend/config.py`
+- `backend/api_routes.py`
+- `requirements.txt`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法级验证：使用 `compile(source, file, "exec")` 对 `backend/config.py`、`backend/api_routes.py`、`visual_module/inference.py` 进行无落盘编译检查，结果通过。
+- 接口协议检查：`/api/diagnose` 返回字段未变更（`detection/retrieved/answer_markdown`）。
+
+### 已知问题
+- 当前仓库尚未提供实际 YOLO 权重文件；未配置 `YOLO_WEIGHTS_PATH` 时会走降级逻辑。
+- 未执行真实模型运行级验证（需本地存在可用权重并安装对应推理依赖）。
+
+### 下一步任务
+1. 新增 `.env.example` 并补充 YOLO 配置项示例。
+2. 准备一份可用权重与测试图片，完成 `/api/diagnose` 的真实推理回归测试。
+
+---
+
+## 2026-03-09 第 7 次更新
+
+- 执行者：Codex
+- 更新类型：视觉推理改为 API 模式（支持本地兜底）
+
+### 更新内容
+1. 新增 API 推理配置项：
+   - `backend/config.py` 增加 `YOLO_MODE`、`YOLO_API_URL`、`YOLO_API_TOKEN`、`YOLO_API_TIMEOUT`。
+2. 路由接线调整：
+   - `backend/api_routes.py` 调用 `run_inference` 时传入 API 模式与相关参数。
+3. 视觉推理逻辑升级：
+   - `visual_module/inference.py` 新增 YOLO API 调用逻辑（HTTP POST JSON）。
+   - 默认 `mode=api`，当 API 成功时直接使用 API 返回结果。
+   - 支持多种响应字段解析（`pest_type/label/class_name/class`、`bbox/xyxy/x1y1x2y2`）。
+   - 当 API 未配置、请求失败、响应非法时自动降级到占位规则推理。
+   - 保留 `mode=local` 本地权重推理路径作为兜底能力。
+
+### 涉及文件/模块
+- `backend/config.py`
+- `backend/api_routes.py`
+- `visual_module/inference.py`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法级验证：使用 `compile(source, file, "exec")` 对改动文件进行无落盘编译检查，结果通过。
+- 接口协议检查：`/api/diagnose` 返回字段保持不变（`detection/retrieved/answer_markdown`）。
+
+### 已知问题
+- 当前未内置 YOLO 远程服务端实现；需外部 API 按约定返回检测结果。
+- API 返回字段若与约定差异过大，可能触发降级逻辑。
+
+### 下一步任务
+1. 新增 `.env.example`，明确 API 模式必填配置与示例。
+2. 增加一个本地 mock YOLO API 用于端到端回归测试。
+
+---
+
+## 2026-03-09 第 8 次更新
+
+- 执行者：Codex
+- 更新类型：YOLO API 接入增强（支持传输图片内容）
+
+### 更新内容
+1. 新增 API 传图配置：
+   - `backend/config.py` 新增 `YOLO_API_SEND_IMAGE_BASE64`（默认 true）。
+   - `backend/config.py` 新增 `YOLO_API_INCLUDE_IMAGE_PATH`（默认 true）。
+2. 路由参数透传：
+   - `backend/api_routes.py` 调用 `run_inference` 时传入上述两个开关。
+3. API 请求体增强：
+   - `visual_module/inference.py` 的 `_api_inference` 支持在请求中携带 `image_base64` 与 `file_name`。
+   - 可按开关决定是否同时携带 `image_path`，兼容同机/跨机部署两种 YOLO API。
+   - 维持现有响应解析与降级策略不变。
+
+### 涉及文件/模块
+- `backend/config.py`
+- `backend/api_routes.py`
+- `visual_module/inference.py`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法级验证：使用 `compile(source, file, "exec")` 对改动文件进行无落盘编译检查，结果通过。
+- 协议检查：`/api/diagnose` 输出结构未变。
+
+### 已知问题
+- `image_base64` 会增大请求体，超大图片建议在调用前压缩。
+- YOLO API 需实现对应字段解析（`image_base64`/`file_name`）。
+
+### 下一步任务
+1. 新增 `.env.example` 并写入 API 传图开关说明。
+2. 提供一个最小 YOLO API mock 示例，便于快速联调。
