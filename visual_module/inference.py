@@ -7,6 +7,20 @@ except Exception:
     YOLO = None  # type: ignore[assignment]
 
 _YOLO_MODEL_CACHE: Dict[str, Any] = {}
+_BUSINESS_LABELS = {"powdery_mildew", "aphid", "gray_mold", "unknown_leaf_issue"}
+_LABEL_ALIASES = {
+    "powdery_mildew": "powdery_mildew",
+    "powdery mildew": "powdery_mildew",
+    "white_powder": "powdery_mildew",
+    "whitepowder": "powdery_mildew",
+    "aphid": "aphid",
+    "aphids": "aphid",
+    "gray_mold": "gray_mold",
+    "gray mold": "gray_mold",
+    "grey_mold": "gray_mold",
+    "grey mold": "gray_mold",
+    "botrytis": "gray_mold",
+}
 
 
 def _guess_pest_from_name(file_name: str) -> str:
@@ -28,8 +42,21 @@ def _get_model(model_path: str) -> Optional[Any]:
     return _YOLO_MODEL_CACHE[model_path]
 
 
+def _normalize_pest_label(raw_label: str) -> Optional[str]:
+    key = raw_label.strip().lower().replace("-", "_")
+    mapped = _LABEL_ALIASES.get(key)
+    if mapped in _BUSINESS_LABELS:
+        return mapped
+    return None
+
+
 def _yolo_inference(
-    image_path: str, model_path: str, device: str, conf: float, iou: float
+    image_path: str,
+    model_path: str,
+    device: str,
+    conf: float,
+    iou: float,
+    business_conf: float,
 ) -> Optional[Dict[str, Union[str, float, List[int]]]]:
     model = _get_model(model_path)
     if model is None:
@@ -60,12 +87,22 @@ def _yolo_inference(
     xyxy = boxes.xyxy[best_idx].tolist()
 
     names = result.names if hasattr(result, "names") else {}
-    pest_type = str(names.get(best_cls_id, f"class_{best_cls_id}"))
+    raw_label = str(names.get(best_cls_id, f"class_{best_cls_id}"))
+    normalized_label = _normalize_pest_label(raw_label)
     bbox = [int(v) for v in xyxy]
+    score = round(best_conf, 4)
+
+    # Guardrail: only pass through domain labels with enough confidence.
+    if normalized_label is None or best_conf < business_conf:
+        return {
+            "pest_type": "unknown_leaf_issue",
+            "confidence": score,
+            "bbox": [0, 0, 0, 0],
+        }
 
     return {
-        "pest_type": pest_type,
-        "confidence": round(best_conf, 4),
+        "pest_type": normalized_label,
+        "confidence": score,
         "bbox": bbox,
     }
 
@@ -76,6 +113,7 @@ def run_inference(
     device: str = "cpu",
     conf: float = 0.25,
     iou: float = 0.45,
+    business_conf: float = 0.45,
 ) -> Dict[str, Union[str, float, List[int]]]:
     if not image_path:
         return {
@@ -93,6 +131,7 @@ def run_inference(
                 device=device,
                 conf=conf,
                 iou=iou,
+                business_conf=business_conf,
             )
             if yolo_result is not None:
                 return yolo_result

@@ -125,6 +125,7 @@ uvicorn backend.main:app --reload --port 8000
 `visual_module/inference.py` 已支持本地 YOLOv8 推理：
 - 优先使用本地模型进行真实检测；
 - 若未安装 YOLO 依赖、模型加载失败或图片不存在，则自动回退到当前占位逻辑（按文件名关键词猜测）。
+- 仅放行业务类别（`powdery_mildew`、`aphid`、`gray_mold`），其余类别自动回退为 `unknown_leaf_issue`。
 
 可通过环境变量控制：
 
@@ -138,6 +139,9 @@ YOLO_DEVICE=cuda:0
 # 推理阈值
 YOLO_CONF=0.25
 YOLO_IOU=0.45
+
+# 业务阈值：低于该值或类别不在业务白名单时，统一回退 unknown_leaf_issue
+YOLO_BUSINESS_CONF=0.45
 ```
 
 Windows PowerShell 示例：
@@ -147,6 +151,7 @@ $env:YOLO_MODEL_PATH = "yolov8n.pt"
 $env:YOLO_DEVICE = "cuda:0"
 $env:YOLO_CONF = "0.25"
 $env:YOLO_IOU = "0.45"
+$env:YOLO_BUSINESS_CONF = "0.45"
 uvicorn backend.main:app --reload --port 8000
 ```
 

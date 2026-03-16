@@ -301,3 +301,45 @@
 ### 下一步任务
 1. 新增 `chunks` 生产脚本（从 `docs/berry_manual.md` 自动切块并落盘 `data/chunks`）。
 2. 将 `embedder.py` 从哈希向量升级为真实 embedding 模型。
+
+---
+
+## 2026-03-16 第 9 次更新
+
+- 执行者：Codex
+- 更新类型：视觉类别映射与低置信度兜底策略
+
+### 更新内容
+1. 更新 `visual_module/inference.py`：
+   - 新增业务类别白名单：`powdery_mildew`、`aphid`、`gray_mold`。
+   - 新增类别别名映射（如 `powdery mildew` -> `powdery_mildew`、`botrytis` -> `gray_mold`）。
+   - YOLO 检测结果若类别不在业务白名单，或置信度低于业务阈值，则统一回退为 `unknown_leaf_issue`。
+
+2. 新增业务置信度配置：
+   - `backend/config.py` 新增 `YOLO_BUSINESS_CONF`（默认 `0.45`）。
+   - `backend/api_routes.py` 将该参数传入 `run_inference`。
+
+3. 文档同步：
+   - `README.md` 增加 `YOLO_BUSINESS_CONF` 说明与 PowerShell 配置示例。
+   - 补充“仅放行业务类别，其余自动回退”的行为说明。
+   - `DEV_NOTES.md` 将“统一推理输出 schema（类别映射等）”标记为已完成。
+
+### 涉及文件/模块
+- `visual_module/inference.py`
+- `backend/config.py`
+- `backend/api_routes.py`
+- `README.md`
+- `DEV_NOTES.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法检查通过：`visual_module/inference.py`、`backend/config.py`、`backend/api_routes.py`
+- 映射函数快速校验通过：`frisbee -> None`、`Powdery Mildew -> powdery_mildew`、`aphid -> aphid`
+
+### 已知问题
+- 当前仍使用通用权重时，可能频繁回退为 `unknown_leaf_issue`，属于预期行为。
+- 真实效果仍取决于后续农业数据训练得到的 `best.pt`。
+
+### 下一步任务
+1. 产出并接入农业病虫害 `best.pt`，验证三类业务标签的端到端稳定识别。
+2. 新增 `/api/diagnose` 自动化测试，覆盖“非业务类别回退”和“低置信度回退”。

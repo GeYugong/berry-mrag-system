@@ -24,6 +24,7 @@ def diagnose(req: DiagnoseRequest) -> DiagnoseResponse:
         device=settings.yolo_device,
         conf=settings.yolo_conf,
         iou=settings.yolo_iou,
+        business_conf=settings.yolo_business_conf,
     )
     query_text = f"{req.query} {detection['pest_type']}"
     query_vector = embed_text(query_text)

@@ -12,6 +12,7 @@ class Settings:
     yolo_device: str = os.getenv("YOLO_DEVICE", "cpu")
     yolo_conf: float = float(os.getenv("YOLO_CONF", "0.25"))
     yolo_iou: float = float(os.getenv("YOLO_IOU", "0.45"))
+    yolo_business_conf: float = float(os.getenv("YOLO_BUSINESS_CONF", "0.45"))
 
 
 settings = Settings()
