@@ -219,6 +219,18 @@ curl -X POST "http://127.0.0.1:8000/api/diagnose" \
 {"id":"chunk-002","title":"灰霉病管理","content":"清理病残体，控制湿度，开花期预防用药。"}
 ```
 
+### 从手册自动生成 chunks
+
+可使用脚本将 `docs/berry_manual.md` 自动转为结构化 `jsonl`：
+
+```bash
+python -m rag_module.build_chunks \
+  --input docs/berry_manual.md \
+  --output data/chunks/berry_manual_chunks.jsonl
+```
+
+生成字段包括：`id/title/content/source/crop/disease_cn/disease_en/symptom/treatments/pesticide/dose/interval_days/keywords`。
+
 ## 🔁 系统流程图
 
 ```mermaid

@@ -343,3 +343,42 @@
 ### 下一步任务
 1. 产出并接入农业病虫害 `best.pt`，验证三类业务标签的端到端稳定识别。
 2. 新增 `/api/diagnose` 自动化测试，覆盖“非业务类别回退”和“低置信度回退”。
+
+---
+
+## 2026-03-16 第 10 次更新
+
+- 执行者：Codex
+- 更新类型：RAG chunks 自动构建脚本与结构化字段落地
+
+### 更新内容
+1. 新增 `rag_module/build_chunks.py`：
+   - 从 `docs/berry_manual.md` 自动解析章节并生成 `jsonl` 知识块。
+   - 支持提取结构化字段：`crop`、`disease_cn`、`disease_en`、`symptom`、`treatments`、`pesticide`、`dose`、`interval_days`、`keywords`。
+   - 提供 CLI 参数：`--input` 与 `--output`，可复用到后续手册版本。
+
+2. 本地执行生成：
+   - 运行 `python -m rag_module.build_chunks --input docs/berry_manual.md --output data/chunks/berry_manual_chunks.jsonl`。
+   - 产出 3 条结构化 chunks，供 `retriever` 直接读取。
+
+3. 文档与任务状态同步：
+   - `README.md` 新增“从手册自动生成 chunks”章节与命令示例。
+   - `DEV_NOTES.md` 将“文本知识块生产流程”“结构化字段补充”标记为已完成。
+
+### 涉及文件/模块
+- `rag_module/build_chunks.py`
+- `README.md`
+- `DEV_NOTES.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 脚本运行成功：`Built chunks: 3 -> data/chunks/berry_manual_chunks.jsonl`
+- 检索验证通过：`rag_module.retriever.search()` 已可直接命中新生成 chunks。
+
+### 已知问题
+- 当前结构化抽取采用规则法，适配 `berry_manual.md` 现有格式；后续文档格式变化时可能需要补充规则。
+- `data/*` 默认被 `.gitignore` 忽略，chunks 需在本地运行脚本生成。
+
+### 下一步任务
+1. 在 `retriever` 中接入基于 `disease/crop` 的元数据过滤参数，降低不相关召回。
+2. 将 `embedder.py` 从哈希向量替换为真实 embedding 模型（先文本 embedding）。
