@@ -382,3 +382,52 @@
 ### 下一步任务
 1. 在 `retriever` 中接入基于 `disease/crop` 的元数据过滤参数，降低不相关召回。
 2. 将 `embedder.py` 从哈希向量替换为真实 embedding 模型（先文本 embedding）。
+
+---
+
+## 2026-03-16 第 11 次更新
+
+- 执行者：Codex
+- 更新类型：`/api/diagnose` 检索过滤参数接入（crop / disease_hint）
+
+### 更新内容
+1. 接口参数扩展：
+   - `backend/schemas.py` 为 `DiagnoseRequest` 新增可选字段：
+     - `crop`（作物提示）
+     - `disease_hint`（病害提示）
+
+2. 路由调用接入过滤参数：
+   - `backend/api_routes.py` 在调用 `retriever.search()` 时传入 `crop` 与 `disease_hint`。
+   - 当未传 `disease_hint` 时，自动回退使用视觉结果中的 `pest_type`。
+
+3. 检索过滤能力落地：
+   - `rag_module/retriever.py` 新增过滤逻辑：
+     - 支持按 `crop`、`disease_hint` 过滤候选知识块。
+     - 有过滤条件时自动扩大召回范围，再二次筛选，最后截断 Top-K。
+   - 兼容 `data/chunks` 的结构化字段（如 `crop`、`disease_en`、`keywords`）。
+
+4. 文档与任务同步：
+   - `README.md` 补充带过滤参数的请求示例。
+   - `DEV_NOTES.md` 将“Top-K 召回与过滤”标记为已完成。
+
+### 涉及文件/模块
+- `backend/schemas.py`
+- `backend/api_routes.py`
+- `rag_module/retriever.py`
+- `README.md`
+- `DEV_NOTES.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法检查通过：`backend/schemas.py`、`backend/api_routes.py`、`rag_module/retriever.py`
+- 检索功能验证通过：
+  - `crop=草莓` 返回 `manual-001`
+  - `disease_hint=aphid` 返回 `manual-002`
+
+### 已知问题
+- 当前过滤依赖规则匹配，若后续文档字段命名变化需同步调整匹配规则。
+- 过滤维度目前为 `crop/disease_hint`，时令条件等高级过滤尚未接入。
+
+### 下一步任务
+1. 将 `embedder.py` 从哈希向量升级为真实文本 embedding 模型。
+2. 为 `/api/diagnose` 新增自动化测试，覆盖过滤参数命中与未命中场景。

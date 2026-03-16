@@ -8,6 +8,10 @@ class DiagnoseRequest(BaseModel):
     image_path: Optional[str] = Field(
         default=None, description="本地图片路径（演示阶段使用）"
     )
+    crop: Optional[str] = Field(default=None, description="可选作物提示，如 草莓/蓝莓")
+    disease_hint: Optional[str] = Field(
+        default=None, description="可选病害提示，如 powdery_mildew/aphid/gray_mold"
+    )
 
 
 class DetectionResult(BaseModel):

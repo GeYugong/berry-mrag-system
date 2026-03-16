@@ -28,7 +28,13 @@ def diagnose(req: DiagnoseRequest) -> DiagnoseResponse:
     )
     query_text = f"{req.query} {detection['pest_type']}"
     query_vector = embed_text(query_text)
-    retrieved = search(query_vector, top_k=settings.top_k)
+    disease_hint = req.disease_hint or str(detection["pest_type"])
+    retrieved = search(
+        query_vector,
+        top_k=settings.top_k,
+        crop=req.crop,
+        disease_hint=disease_hint,
+    )
     reranked = rerank(retrieved, pest_type=str(detection["pest_type"]))
     answer = generate_markdown_report(req.query, detection, reranked)
 

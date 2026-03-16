@@ -102,7 +102,7 @@ berry-mrag-system/
 
 - [ ] 将 `embedder.py` 升级为真实 embedding（CLIP/文本模型二选一先落地）。
 - [ ] 使用 `data/chunks` 构建向量索引并持久化到 `data/vector_store`。
-- [ ] 完成 Top-K 召回与过滤（按病虫害类别、作物阶段、时令条件）。
+- [x] 完成 Top-K 召回与过滤（按病虫害类别、作物阶段、时令条件）。
 - [ ] 优化 `reranker.py`（规则+模型混合，先规则后模型）。
 - [ ] 在 `mllm_generator.py` 增加引用依据与安全提示模板。
 
