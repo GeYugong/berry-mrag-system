@@ -1,0 +1,19 @@
+# Copy this file to data/processed/berry_yolo_data.yaml and edit paths as needed.
+# Directory layout example:
+# data/processed/berry_detection/
+#   images/train/*.jpg
+#   images/val/*.jpg
+#   images/test/*.jpg
+#   labels/train/*.txt
+#   labels/val/*.txt
+#   labels/test/*.txt
+
+path: data/processed/berry_detection
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: powdery_mildew
+  1: aphid
+  2: gray_mold

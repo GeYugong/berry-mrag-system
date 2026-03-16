@@ -150,6 +150,33 @@ $env:YOLO_IOU = "0.45"
 uvicorn backend.main:app --reload --port 8000
 ```
 
+## YOLOv8 本地训练（产出 best.pt）
+
+1. 准备数据集配置文件：
+   - 复制 `docs/berry_yolo_data.example.yaml`
+   - 重命名为 `data/processed/berry_yolo_data.yaml`
+   - 按你的实际数据目录修改 `path/train/val/test`
+
+2. 启动训练（默认输出到 `runs/yolo/berry-disease`）：
+
+```bash
+python -m visual_module.train_yolo \
+  --data data/processed/berry_yolo_data.yaml \
+  --model yolov8n.pt \
+  --device 0 \
+  --epochs 100 \
+  --batch 16 \
+  --imgsz 640
+```
+
+3. 训练完成后使用最佳权重进行后端推理：
+
+```powershell
+$env:YOLO_MODEL_PATH = "D:/0code/berry-mrag-system/runs/yolo/berry-disease/weights/best.pt"
+$env:YOLO_DEVICE = "cuda:0"
+uvicorn backend.main:app --reload --port 8000
+```
+
 调用示例：
 
 ```bash

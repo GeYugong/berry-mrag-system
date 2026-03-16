@@ -18,7 +18,8 @@ berry-mrag-system/
 │   ├── schemas.py            # 请求/响应模型
 │   └── config.py             # 运行配置
 ├── visual_module/
-│   └── inference.py          # 视觉诊断占位推理
+│   ├── inference.py          # 视觉诊断（YOLO优先，失败回退）
+│   └── train_yolo.py         # YOLOv8 训练/验证/导出脚本
 ├── rag_module/
 │   ├── embedder.py           # 向量化占位实现
 │   ├── retriever.py          # 检索逻辑（内置知识库）
@@ -70,7 +71,7 @@ berry-mrag-system/
 #### P0：先打通可评估主链路
 
 - [ ] 建立最小可用数据集（图片 + 文本 chunks）并完成目录落盘。
-- [ ] 接入真实 YOLO 推理，替换 `visual_module/inference.py` 占位逻辑。
+- [x] 接入真实 YOLO 推理，替换 `visual_module/inference.py` 占位逻辑。
 - [ ] 接入真实检索（优先 FAISS），替换 `rag_module/retriever.py` 内置知识库。
 - [ ] 保持 `/api/diagnose` 输出协议稳定（`detection/retrieved/answer_markdown`）。
 - [ ] 增加最小回归测试，覆盖 `/api/health` 与 `/api/diagnose`。
@@ -86,7 +87,7 @@ berry-mrag-system/
 
 #### YOLO 专项（重点）
 
-- [ ] 新建 `visual_module/train_yolo.py`（训练入口与参数管理）。
+- [x] 新建 `visual_module/train_yolo.py`（训练入口与参数管理）。
 - [ ] 新建 `visual_module/preprocessor.py`（尺寸/色彩/增强预处理）。
 - [ ] 准备 YOLO 数据配置（类别、路径、训练参数）。
 - [ ] 训练基线模型（记录输入尺寸、batch、epoch、lr、augment）。

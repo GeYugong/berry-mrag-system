@@ -217,3 +217,47 @@
 ### 下一步任务
 1. 新增 `visual_module/train_yolo.py`，提供本地训练脚本（含数据集 YAML、训练参数、导出 best.pt 说明）。
 2. 在 `backend` 增加一个最小集成测试，覆盖 YOLO 正常推理与回退逻辑两条路径。
+
+---
+
+## 2026-03-16 第 7 次更新
+
+- 执行者：Codex
+- 更新类型：YOLO 训练脚本与数据配置模板落地
+
+### 更新内容
+1. 新增 `visual_module/train_yolo.py`：
+   - 支持 YOLOv8 训练参数管理（`data/model/device/epochs/batch/imgsz` 等）。
+   - 支持训练后自动验证（可关闭）。
+   - 支持导出模型（默认 `onnx`，可选 `none/torchscript/openvino/engine`）。
+   - 训练完成后输出 `save_dir` 与 `best.pt` 路径，便于直接接入后端推理。
+
+2. 新增数据集配置模板：
+   - 新增 `docs/berry_yolo_data.example.yaml`（用于复制到 `data/processed/berry_yolo_data.yaml`）。
+   - 提供标准目录结构示例与默认类别映射：`powdery_mildew/aphid/gray_mold`。
+
+3. 文档同步：
+   - 更新 `README.md`，新增“YOLOv8 本地训练（产出 best.pt）”章节与执行命令。
+   - 更新 `DEV_NOTES.md`，将 YOLO 推理接入与 `train_yolo.py` 项标记为已完成。
+
+### 涉及文件/模块
+- `visual_module/train_yolo.py`
+- `docs/berry_yolo_data.example.yaml`
+- `README.md`
+- `DEV_NOTES.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法检查通过（不落盘编译）：
+  - `visual_module/train_yolo.py`
+  - `visual_module/inference.py`
+  - `backend/api_routes.py`
+  - `backend/config.py`
+
+### 已知问题
+- 当前尚未在真实标注数据上执行训练，`best.pt` 仍需用户按数据集完成训练后生成。
+- 推理类别仍依赖当前加载权重，若继续使用 COCO 预训练权重会出现非农业类别。
+
+### 下一步任务
+1. 以 `berry_yolo_data.yaml` + 标注数据实际跑完一次训练，产出并接入 `best.pt`。
+2. 增加类别映射与低置信度兜底策略，避免非农业类别直接传入 RAG。
