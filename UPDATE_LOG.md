@@ -261,3 +261,43 @@
 ### 下一步任务
 1. 以 `berry_yolo_data.yaml` + 标注数据实际跑完一次训练，产出并接入 `best.pt`。
 2. 增加类别映射与低置信度兜底策略，避免非农业类别直接传入 RAG。
+
+---
+
+## 2026-03-16 第 8 次更新
+
+- 执行者：Codex
+- 更新类型：RAG 检索模块升级（本地 chunks + 可持久化索引）
+
+### 更新内容
+1. 重写 `rag_module/retriever.py`：
+   - 检索数据源优先读取 `data/chunks/*.json|*.jsonl`。
+   - 若本地 chunks 不存在，自动回退读取 `docs/berry_manual.md`。
+   - 若仍无可用数据，回退到内置最小知识库，确保服务不中断。
+
+2. 检索索引与缓存：
+   - 启动检索时自动构建向量并缓存。
+   - 向量与元数据持久化到 `data/vector_store/`。
+   - 若环境安装了 `faiss`，优先使用 FAISS `IndexFlatIP` 检索；未安装时自动回退余弦相似度检索。
+
+3. 文档同步：
+   - 更新 `README.md`，新增 “RAG 检索数据接入（本地 chunks）” 章节。
+   - 更新 `DEV_NOTES.md`，将“真实检索接入”任务标记为已完成。
+
+### 涉及文件/模块
+- `rag_module/retriever.py`
+- `README.md`
+- `DEV_NOTES.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法检查通过（不落盘编译）：`rag_module/retriever.py`
+- 代码路径检查通过：`/api/diagnose` 调用路径不变，兼容现有接口协议。
+
+### 已知问题
+- `data/*` 在仓库中默认被 `.gitignore` 忽略，chunks 与 vector_store 需要在本地环境准备与验证。
+- 当前 embedding 仍为哈希占位实现，后续可替换为真实文本 embedding 模型以提升召回质量。
+
+### 下一步任务
+1. 新增 `chunks` 生产脚本（从 `docs/berry_manual.md` 自动切块并落盘 `data/chunks`）。
+2. 将 `embedder.py` 从哈希向量升级为真实 embedding 模型。

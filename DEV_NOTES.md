@@ -72,7 +72,7 @@ berry-mrag-system/
 
 - [ ] 建立最小可用数据集（图片 + 文本 chunks）并完成目录落盘。
 - [x] 接入真实 YOLO 推理，替换 `visual_module/inference.py` 占位逻辑。
-- [ ] 接入真实检索（优先 FAISS），替换 `rag_module/retriever.py` 内置知识库。
+- [x] 接入真实检索（优先 FAISS），替换 `rag_module/retriever.py` 内置知识库。
 - [ ] 保持 `/api/diagnose` 输出协议稳定（`detection/retrieved/answer_markdown`）。
 - [ ] 增加最小回归测试，覆盖 `/api/health` 与 `/api/diagnose`。
 

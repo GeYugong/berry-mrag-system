@@ -185,6 +185,35 @@ curl -X POST "http://127.0.0.1:8000/api/diagnose" \
   -d "{\"query\":\"草莓叶片有白色粉末怎么办\",\"image_path\":\"demo_powder.jpg\"}"
 ```
 
+## RAG 检索数据接入（本地 chunks）
+
+`rag_module/retriever.py` 已升级为本地知识块检索：
+- 优先读取 `data/chunks/*.json` 或 `data/chunks/*.jsonl`；
+- 若未提供 chunks，则回退读取 `docs/berry_manual.md`；
+- 若仍无可用数据，则回退到内置最小知识库；
+- 检索索引与向量缓存会落到 `data/vector_store/`。
+
+支持的 chunks 字段：`id`、`title`、`content`（至少要有 `content`）。
+
+`json` 示例（数组）：
+
+```json
+[
+  {
+    "id": "chunk-001",
+    "title": "草莓白粉病防治",
+    "content": "加强通风，发病初期按标签喷施三唑类药剂。"
+  }
+]
+```
+
+`jsonl` 示例（每行一个 JSON 对象）：
+
+```jsonl
+{"id":"chunk-001","title":"草莓白粉病防治","content":"加强通风，发病初期按标签喷施三唑类药剂。"}
+{"id":"chunk-002","title":"灰霉病管理","content":"清理病残体，控制湿度，开花期预防用药。"}
+```
+
 ## 🔁 系统流程图
 
 ```mermaid
