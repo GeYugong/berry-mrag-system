@@ -18,7 +18,13 @@ def health() -> dict:
 
 @router.post("/diagnose", response_model=DiagnoseResponse)
 def diagnose(req: DiagnoseRequest) -> DiagnoseResponse:
-    detection = run_inference(req.image_path)
+    detection = run_inference(
+        req.image_path,
+        model_path=settings.yolo_model_path,
+        device=settings.yolo_device,
+        conf=settings.yolo_conf,
+        iou=settings.yolo_iou,
+    )
     query_text = f"{req.query} {detection['pest_type']}"
     query_vector = embed_text(query_text)
     retrieved = search(query_vector, top_k=settings.top_k)

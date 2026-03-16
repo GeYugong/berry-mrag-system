@@ -173,3 +173,47 @@
 
 ### 下一步任务
 1. 开始执行 To-Do 的第一项工程任务：新增 `visual_module/train_yolo.py` 并接入真实 YOLO 推理流程。
+
+---
+
+## 2026-03-16 第 6 次更新
+
+- 执行者：Codex
+- 更新类型：YOLOv8 本地推理接入与配置文档补全
+
+### 更新内容
+1. 将视觉推理从纯占位逻辑升级为“YOLOv8 优先 + 占位回退”：
+   - 更新 `visual_module/inference.py`，新增本地 YOLOv8 推理流程。
+   - 支持从检测结果中提取最高置信度目标并返回 `pest_type/confidence/bbox`。
+   - 当 `ultralytics` 不可用、模型推理失败或图片不存在时，自动回退到文件名关键词占位逻辑，保证接口可用性。
+
+2. 新增后端 YOLO 配置项并接入诊断接口：
+   - 更新 `backend/config.py`，新增 `YOLO_MODEL_PATH/YOLO_DEVICE/YOLO_CONF/YOLO_IOU`。
+   - 更新 `backend/api_routes.py`，`/api/diagnose` 调用 `run_inference` 时传入上述配置。
+
+3. 更新工程依赖与使用说明：
+   - 更新 `requirements.txt`，新增 `ultralytics`、`opencv-python`。
+   - 更新 `README.md`，新增“YOLOv8 本地推理（无需外部 API）”章节和 PowerShell 配置示例。
+   - 同步修正流程图边界说明，标注已支持本地 YOLOv8 推理。
+
+### 涉及文件/模块
+- `visual_module/inference.py`
+- `backend/config.py`
+- `backend/api_routes.py`
+- `requirements.txt`
+- `README.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法检查通过（不落盘编译）：
+  - `backend/config.py`
+  - `backend/api_routes.py`
+  - `visual_module/inference.py`
+
+### 已知问题
+- 当前尚未在本环境完成 `ultralytics` 安装与真实权重推理实测；仍需在可安装依赖的机器上进行运行级验证。
+- 返回类别名依赖模型 `names` 映射，需与最终自训练数据集类别规范保持一致。
+
+### 下一步任务
+1. 新增 `visual_module/train_yolo.py`，提供本地训练脚本（含数据集 YAML、训练参数、导出 best.pt 说明）。
+2. 在 `backend` 增加一个最小集成测试，覆盖 YOLO 正常推理与回退逻辑两条路径。

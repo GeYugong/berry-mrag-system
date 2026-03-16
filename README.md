@@ -120,6 +120,36 @@ pip install -r requirements.txt
 uvicorn backend.main:app --reload --port 8000
 ```
 
+## YOLOv8 本地推理（无需外部 API）
+
+`visual_module/inference.py` 已支持本地 YOLOv8 推理：
+- 优先使用本地模型进行真实检测；
+- 若未安装 YOLO 依赖、模型加载失败或图片不存在，则自动回退到当前占位逻辑（按文件名关键词猜测）。
+
+可通过环境变量控制：
+
+```bash
+# 模型权重路径（可用 yolov8n.pt / 你的自训练 best.pt）
+YOLO_MODEL_PATH=yolov8n.pt
+
+# 设备：NVIDIA 显卡建议 cuda:0，CPU 可设为 cpu
+YOLO_DEVICE=cuda:0
+
+# 推理阈值
+YOLO_CONF=0.25
+YOLO_IOU=0.45
+```
+
+Windows PowerShell 示例：
+
+```powershell
+$env:YOLO_MODEL_PATH = "yolov8n.pt"
+$env:YOLO_DEVICE = "cuda:0"
+$env:YOLO_CONF = "0.25"
+$env:YOLO_IOU = "0.45"
+uvicorn backend.main:app --reload --port 8000
+```
+
 调用示例：
 
 ```bash
@@ -187,7 +217,7 @@ FE --> U
 subgraph EDGE[边界情况 逻辑提示]
   E1[query 缺失 会被校验拦截]
   E2[知识库很小 命中弱 报告更泛]
-  E3[当前不真正读取图片 仅用文件名模拟]
+  E3[已支持本地 YOLOv8 推理 无法推理时回退到文件名模拟]
   E4[接真模型需增加 上传存储 模型加载 向量库管理]
 end
 
