@@ -442,7 +442,7 @@
 1. 升级 `rag_module/embedder.py`：
    - 支持通过 OpenAI SDK 调用百炼兼容接口（`DASHSCOPE_API_KEY` + `EMBEDDING_MODEL`）。
    - 默认模型为 `text-embedding-v4`，支持 `dimensions` 参数。
-   - 新增本地哈希向量回退，接口异常时保持服务可用。
+   - 新迎本地哈希向量回退，接口异常时保持服务可用。
 
 2. 检索缓存重建逻辑增强：
    - `rag_module/retriever.py` 的索引签名加入 `EMBEDDING_MODEL/EMBEDDING_DIM`。
@@ -496,7 +496,7 @@
 
 ### 涉及文件/模块
 - `tests/test_visual_inference_guardrail.py`
-- `tests/test_retriever_filters.py`
+- `tests/test_retriever_filters.py"
 - `tests/test_api_diagnose_resilience.py`
 - `requirements.txt`
 - `UPDATE_LOG.md`
@@ -546,3 +546,36 @@
 ### 下一步任务
 1. **前端依赖安装**：安装 `lucide-react` (图标)、`react-markdown` (渲染) 及 `clsx` (类名管理)。
 2. **核心组件开发**：实现图片上传预览与诊断报告展示组件，并与后端 `/api/diagnose` 接口联调。
+
+---
+
+## 2026-03-16 第 15 次更新
+
+- 执行者：Gemini CLI
+- 更新类型：前端全栈功能实现与后端联调增强（CORS & 文件上传）
+
+### 更新内容
+1. **后端联调能力增强**：
+   - 更新 `backend/main.py`：启用 **CORS 中间件**，允许前端跨域请求。
+   - 更新 `backend/api_routes.py`：新增 `POST /api/diagnose/upload` 接口，支持 `multipart/form-data` 文件上传，方便 Web 端直接调用。
+2. **前端应用完整落地**：
+   - 编写 `frontend/src/App.tsx`：实现图片上传预览、文本问题输入、异步诊断请求及报告渲染逻辑。
+   - 编写 `frontend/src/App.css`：确立“智慧农业”主题视觉，并添加加载动画。
+   - 集成 `react-markdown`：实现诊断报告的富文本展示。
+   - 集成 `lucide-react`：增强界面的图形化引导。
+
+### 涉及文件/模块
+- `backend/main.py`
+- `backend/api_routes.py`
+- `frontend/src/App.tsx`, `App.css`, `index.css`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- **后端接口验证**：使用模拟数据调用 `/api/diagnose/upload` 成功保存图片并返回诊断 JSON。
+- **前端编译验证**：React 组件无语法错误，样式加载正常。
+
+### 已知问题
+- 生产环境部署时需收紧 `allow_origins` 配置。
+
+### 下一步任务
+1. 启动全栈服务进行端到端实测验证。
