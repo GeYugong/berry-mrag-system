@@ -1,5 +1,6 @@
 import json
 import math
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
@@ -81,6 +82,8 @@ def _source_signature() -> str:
     for p in tracked:
         st = p.stat()
         parts.append(f"{p.as_posix()}:{int(st.st_mtime)}:{st.st_size}")
+    parts.append(f"emb_model:{os.getenv('EMBEDDING_MODEL', 'text-embedding-v4')}")
+    parts.append(f"emb_dim:{os.getenv('EMBEDDING_DIM', '1024')}")
     return "|".join(parts)
 
 
@@ -235,7 +238,12 @@ def _ensure_index(dim: int) -> _IndexCache:
     global _INDEX_CACHE
     signature = _source_signature()
 
-    if _INDEX_CACHE and _INDEX_CACHE.signature == signature:
+    if (
+        _INDEX_CACHE
+        and _INDEX_CACHE.signature == signature
+        and _INDEX_CACHE.vectors
+        and len(_INDEX_CACHE.vectors[0]) == dim
+    ):
         return _INDEX_CACHE
 
     items = _load_items()

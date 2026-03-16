@@ -1,7 +1,6 @@
-# 更新日志（Codex）
+# 更新日志
 
 说明：
-- 本文件由 Codex 维护。
 - 每次更新必须追加新记录，不覆盖历史记录。
 - 记录包含：时间、执行者、更新内容、验证结果、已知问题。
 
@@ -429,5 +428,121 @@
 - 过滤维度目前为 `crop/disease_hint`，时令条件等高级过滤尚未接入。
 
 ### 下一步任务
-1. 将 `embedder.py` 从哈希向量升级为真实文本 embedding 模型。
+1. 将 `embedder.py` 从哈希向量升级为真实文本 embedding 模型识别。
 2. 为 `/api/diagnose` 新增自动化测试，覆盖过滤参数命中与未命中场景。
+
+---
+
+## 2026-03-16 第 12 次更新
+
+- 执行者：Codex
+- 更新类型：接入百炼 OpenAI 兼容 Embedding（Qwen3-Embedding）
+
+### 更新内容
+1. 升级 `rag_module/embedder.py`：
+   - 支持通过 OpenAI SDK 调用百炼兼容接口（`DASHSCOPE_API_KEY` + `EMBEDDING_MODEL`）。
+   - 默认模型为 `text-embedding-v4`，支持 `dimensions` 参数。
+   - 新增本地哈希向量回退，接口异常时保持服务可用。
+
+2. 检索缓存重建逻辑增强：
+   - `rag_module/retriever.py` 的索引签名加入 `EMBEDDING_MODEL/EMBEDDING_DIM`。
+   - 维度变化时自动触发向量重建，避免旧索引污染。
+
+3. 依赖与文档更新：
+   - `requirements.txt` 新增 `openai` 依赖。
+   - `README.md` 新增百炼 Embedding 环境变量配置说明。
+
+### 涉及文件/模块
+- `rag_module/embedder.py`
+- `rag_module/retriever.py`
+- `requirements.txt`
+- `README.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法检查通过：`rag_module/embedder.py`、`rag_module/retriever.py`
+- `embed_text(..., dim=64)` 可返回 64 维向量。
+
+### 已知问题
+- 当前环境网络受限时，Embedding 可能走回退向量；需在可联网环境验证真实 API 命中。
+
+### 下一步任务
+1. 重启 `uvicorn` 并验证 `data/vector_store` 已按新 embedding 维度重建。
+2. 新增 `/api/diagnose` 自动化测试，覆盖 embedding API 异常回退路径。
+
+---
+
+## 2026-03-16 第 13 次更新
+
+- 执行者：Codex
+- 更新类型：自动化测试用例新增（YOLO 兜底 / 检索过滤 / 诊断韧性）
+
+### 更新内容
+1. 新增视觉兜底测试：`tests/test_visual_inference_guardrail.py`
+   - 覆盖非业务类别回退 `unknown_leaf_issue`。
+   - 覆盖低置信度业务类别回退。
+   - 覆盖业务类别+足够置信度正常放行。
+
+2. 新增检索过滤测试：`tests/test_retriever_filters.py`
+   - 覆盖 `crop=草莓` 过滤命中。
+   - 覆盖 `disease_hint=aphid` 过滤命中。
+
+3. 新增接口韧性测试：`tests/test_api_diagnose_resilience.py`
+   - 覆盖 embedding API 异常时 `embed_text` 的回退向量行为。
+   - 覆盖 `/api/diagnose` 在 embedding API 异常场景下仍返回 200。
+
+4. 依赖调整：
+   - `requirements.txt` 增加 `pytest` 依赖。
+
+### 涉及文件/模块
+- `tests/test_visual_inference_guardrail.py`
+- `tests/test_retriever_filters.py`
+- `tests/test_api_diagnose_resilience.py`
+- `requirements.txt`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 测试文件语法检查通过。
+- 关键断言手工验证通过：
+  - `embed_text` 在 API 异常时可返回指定维度向量。
+  - `retriever` 过滤逻辑可正确命中目标样本。
+- 当前会话因 PyPI 访问受限，`pytest` 模块安装失败，未完成完整 `python -m pytest` 运行验证。
+
+### 已知问题
+- 受网络/代理环境影响，`pip install pytest` 在当前会话返回 `No matching distribution found`。
+
+### 下一步任务
+1. 在可安装依赖的终端执行 `pip install -r requirements.txt` 后运行 `python -m pytest -q tests`。
+2. 补充一条真实 `TestClient` 集成测试，不依赖 monkeypatch 的 `search` 返回。
+
+---
+
+## 2026-03-16 第 14 次更新
+
+- 执行者：Gemini CLI
+- 更新类型：仓库深度调研与前端脚手架初始化
+
+### 更新内容
+1. **仓库深度调研与代码梳理**：
+   - 完整分析了 `backend`、`visual_module`、`rag_module` 的逻辑链路。
+   - 确认了 `/api/diagnose` 接口的输入输出协议，以及视觉模块的“YOLO 优先 + 文件名回退”和 RAG 模块的“FAISS 检索 + 规则重排”机制。
+2. **前端脚手架初始化**：
+   - 在 `frontend/` 目录下使用 Vite 初始化了 **React + TypeScript** 项目。
+   - 确立了前端“智慧农业”主题风格（森林绿 + 浆果红）及交互原型设计。
+
+### 涉及文件/模块
+- `UPDATE_LOG.md`
+- `frontend/` (Vite 初始化产物)
+- `backend/`, `visual_module/`, `rag_module/` (调研覆盖)
+
+### 验证结果
+- **后端协议校验**：通过 `read_file` 确认接口逻辑闭环，支持多模态输入与 Markdown 报告输出。
+- **前端初始化校验**：`frontend/` 目录结构已生成，`package.json` 配置正确。
+
+### 已知问题
+- 前端目前仅为基础骨架，尚未安装 `lucide-react`、`react-markdown` 等核心依赖。
+- `embedder.py` 和 `mllm_generator.py` 目前仍为占位实现，需在前端联调后考虑接入真实模型。
+
+### 下一步任务
+1. **前端依赖安装**：安装 `lucide-react` (图标)、`react-markdown` (渲染) 及 `clsx` (类名管理)。
+2. **核心组件开发**：实现图片上传预览与诊断报告展示组件，并与后端 `/api/diagnose` 接口联调。

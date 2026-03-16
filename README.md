@@ -242,6 +242,20 @@ python -m rag_module.build_chunks \
 
 生成字段包括：`id/title/content/source/crop/disease_cn/disease_en/symptom/treatments/pesticide/dose/interval_days/keywords`。
 
+### 使用百炼 Embedding（Qwen3-Embedding）
+
+在环境变量中配置：
+
+```powershell
+$env:DASHSCOPE_API_KEY = "你的Key"
+$env:EMBEDDING_MODEL = "text-embedding-v4"
+$env:EMBEDDING_DIM = "1024"
+```
+
+说明：
+- `rag_module/embedder.py` 已支持通过 OpenAI 兼容接口调用百炼 Embedding。
+- 若接口不可用会自动回退到本地哈希向量（保证服务可用）。
+
 ## 🔁 系统流程图
 
 ```mermaid
