@@ -164,7 +164,7 @@ uvicorn backend.main:app --reload --port 8000
 ```powershell
 $env:GEN_PROVIDER = "gemini"   # 不使用 Gemini 时可设为 template
 $env:GEMINI_API_KEY = "你的Google API Key"
-$env:GEMINI_MODEL = "gemini-2.5-flash"
+$env:GEMINI_MODEL = "gemini-3.0-flash"
 $env:GEMINI_TIMEOUT_SEC = "20"
 $env:GEMINI_TEMPERATURE = "0.4"
 ```
