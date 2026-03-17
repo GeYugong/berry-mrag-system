@@ -207,13 +207,52 @@ def _to_float32_array(vectors: List[List[float]]):  # type: ignore[no-untyped-de
 
 def _persist_cache(items: List[Dict[str, object]], vectors: List[List[float]]) -> None:
     VECTOR_STORE_DIR.mkdir(parents=True, exist_ok=True)
+    signature = _source_signature()
+    dim = len(vectors[0]) if vectors else 0
     META_CACHE_FILE.write_text(
-        json.dumps({"count": len(items), "items": items}, ensure_ascii=False, indent=2),
+        json.dumps(
+            {
+                "count": len(items),
+                "dim": dim,
+                "signature": signature,
+                "items": items,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
     VECTORS_CACHE_FILE.write_text(
         json.dumps(vectors, ensure_ascii=False), encoding="utf-8"
     )
+
+
+def _load_cached_items_vectors(
+    signature: str, dim: int
+) -> Optional[Tuple[List[Dict[str, object]], List[List[float]]]]:
+    if not META_CACHE_FILE.exists() or not VECTORS_CACHE_FILE.exists():
+        return None
+    try:
+        meta = json.loads(META_CACHE_FILE.read_text(encoding="utf-8"))
+        vectors = json.loads(VECTORS_CACHE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+    if not isinstance(meta, dict) or not isinstance(vectors, list):
+        return None
+    if str(meta.get("signature", "")) != signature:
+        return None
+    if int(meta.get("dim", 0)) != dim:
+        return None
+
+    items = meta.get("items", [])
+    if not isinstance(items, list):
+        return None
+    if len(items) != len(vectors):
+        return None
+    if vectors and (not isinstance(vectors[0], list) or len(vectors[0]) != dim):
+        return None
+    return items, vectors
 
 
 def _build_faiss_index(vectors: List[List[float]]) -> Optional[object]:
@@ -244,6 +283,18 @@ def _ensure_index(dim: int) -> _IndexCache:
         and _INDEX_CACHE.vectors
         and len(_INDEX_CACHE.vectors[0]) == dim
     ):
+        return _INDEX_CACHE
+
+    cached = _load_cached_items_vectors(signature=signature, dim=dim)
+    if cached is not None:
+        items, vectors = cached
+        faiss_index = _build_faiss_index(vectors)
+        _INDEX_CACHE = _IndexCache(
+            items=items,
+            vectors=vectors,
+            signature=signature,
+            faiss_index=faiss_index,
+        )
         return _INDEX_CACHE
 
     items = _load_items()
