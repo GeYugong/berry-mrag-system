@@ -18,7 +18,8 @@ berry-mrag-system/
 │   ├── schemas.py            # 请求/响应模型
 │   └── config.py             # 运行配置
 ├── visual_module/
-│   └── inference.py          # 视觉诊断占位推理
+│   ├── inference.py          # 视觉诊断（YOLO优先，失败回退）
+│   └── train_yolo.py         # YOLOv8 训练/验证/导出脚本
 ├── rag_module/
 │   ├── embedder.py           # 向量化占位实现
 │   ├── retriever.py          # 检索逻辑（内置知识库）
@@ -70,8 +71,8 @@ berry-mrag-system/
 #### P0：先打通可评估主链路
 
 - [ ] 建立最小可用数据集（图片 + 文本 chunks）并完成目录落盘。
-- [ ] 接入真实 YOLO 推理，替换 `visual_module/inference.py` 占位逻辑。
-- [ ] 接入真实检索（优先 FAISS），替换 `rag_module/retriever.py` 内置知识库。
+- [x] 接入真实 YOLO 推理，替换 `visual_module/inference.py` 占位逻辑。
+- [x] 接入真实检索（优先 FAISS），替换 `rag_module/retriever.py` 内置知识库。
 - [ ] 保持 `/api/diagnose` 输出协议稳定（`detection/retrieved/answer_markdown`）。
 - [ ] 增加最小回归测试，覆盖 `/api/health` 与 `/api/diagnose`。
 
@@ -81,12 +82,12 @@ berry-mrag-system/
 - [ ] 建立标注规范文档（框选规则、遮挡/重叠处理、难例定义）。
 - [ ] 采集并清洗原始图像，去除重复、严重模糊、错误样本。
 - [ ] 划分训练/验证/测试集，防止同场景泄漏。
-- [ ] 建立文本知识块生产流程（解析、切块、去重、元数据）。
-- [ ] 补充结构化字段（农药、剂量、安全间隔期、适用作物阶段）。
+- [x] 建立文本知识块生产流程（解析、切块、去重、元数据）。
+- [x] 补充结构化字段（农药、剂量、安全间隔期、适用作物阶段）。
 
 #### YOLO 专项（重点）
 
-- [ ] 新建 `visual_module/train_yolo.py`（训练入口与参数管理）。
+- [x] 新建 `visual_module/train_yolo.py`（训练入口与参数管理）。
 - [ ] 新建 `visual_module/preprocessor.py`（尺寸/色彩/增强预处理）。
 - [ ] 准备 YOLO 数据配置（类别、路径、训练参数）。
 - [ ] 训练基线模型（记录输入尺寸、batch、epoch、lr、augment）。
@@ -94,14 +95,14 @@ berry-mrag-system/
 - [ ] 输出误检/漏检样本清单并建立回流机制。
 - [ ] 完成模型版本化（权重、配置、数据版本、评估报告绑定）。
 - [ ] 在 `inference.py` 增加真实模型加载、阈值控制、NMS 参数配置。
-- [ ] 统一推理输出 schema（类别映射、置信度、bbox 坐标系说明）。
+- [x] 统一推理输出 schema（类别映射、置信度、bbox 坐标系说明）。
 - [ ] 增加推理性能测试（单张延迟、吞吐、CPU/GPU 对比）。
 
 #### RAG 专项
 
 - [ ] 将 `embedder.py` 升级为真实 embedding（CLIP/文本模型二选一先落地）。
 - [ ] 使用 `data/chunks` 构建向量索引并持久化到 `data/vector_store`。
-- [ ] 完成 Top-K 召回与过滤（按病虫害类别、作物阶段、时令条件）。
+- [x] 完成 Top-K 召回与过滤（按病虫害类别、作物阶段、时令条件）。
 - [ ] 优化 `reranker.py`（规则+模型混合，先规则后模型）。
 - [ ] 在 `mllm_generator.py` 增加引用依据与安全提示模板。
 

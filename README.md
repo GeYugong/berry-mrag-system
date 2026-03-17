@@ -68,7 +68,7 @@ pip install -r requirements.txt
 
 ```
 
-*(注：当前仓库尚未提供 `.env.example`，如需引入外部 API 密钥，请在后续版本补充配置模板并在此处更新说明。)*
+*(注：仓库已提供 `.env.example`，请复制为 `.env` 后按本机环境填写关键配置。)*
 
 
 
@@ -110,13 +110,92 @@ pip install -r requirements.txt
 ## 当前可运行版本（MVP 骨架）
 
 已提供可运行的后端最小链路：
-- `POST /api/diagnose`：接收文本问题和可选图片路径，返回诊断结果、检索结果与 Markdown 建议。
+- `POST /api/diagnose`：接收文本问题、可选图片路径与可选过滤参数，返回诊断结果、检索结果与 Markdown 建议。
 - `GET /api/health`：服务健康检查。
 
 启动方式：
 
 ```bash
 pip install -r requirements.txt
+uvicorn backend.main:app --reload --port 8000
+```
+
+## YOLOv8 本地推理（无需外部 API）
+
+`visual_module/inference.py` 已支持本地 YOLOv8 推理：
+- 优先使用本地模型进行真实检测；
+- 若未安装 YOLO 依赖、模型加载失败或图片不存在，则自动回退到当前占位逻辑（按文件名关键词猜测）。
+- 仅放行业务类别（`powdery_mildew`、`aphid`、`gray_mold`），其余类别自动回退为 `unknown_leaf_issue`。
+
+可通过环境变量控制：
+
+```bash
+# 模型权重路径（可用 yolov8n.pt / 你的自训练 best.pt）
+YOLO_MODEL_PATH=yolov8n.pt
+
+# 设备：NVIDIA 显卡建议 cuda:0，CPU 可设为 cpu
+YOLO_DEVICE=cuda:0
+
+# 推理阈值
+YOLO_CONF=0.25
+YOLO_IOU=0.45
+
+# 业务阈值：低于该值或类别不在业务白名单时，统一回退 unknown_leaf_issue
+YOLO_BUSINESS_CONF=0.45
+```
+
+Windows PowerShell 示例：
+
+```powershell
+$env:YOLO_MODEL_PATH = "yolov8n.pt"
+$env:YOLO_DEVICE = "cuda:0"
+$env:YOLO_CONF = "0.25"
+$env:YOLO_IOU = "0.45"
+$env:YOLO_BUSINESS_CONF = "0.45"
+uvicorn backend.main:app --reload --port 8000
+```
+
+## 生成阶段接入 Gemini（可选）
+
+`rag_module/mllm_generator.py` 已支持：`Gemini 优先 + 模板回退`。
+
+配置示例（PowerShell）：
+
+```powershell
+$env:GEN_PROVIDER = "gemini"   # 不使用 Gemini 时可设为 template
+$env:GEMINI_API_KEY = "你的Google API Key"
+$env:GEMINI_MODEL = "gemini-3.0-flash"
+$env:GEMINI_TIMEOUT_SEC = "20"
+$env:GEMINI_TEMPERATURE = "0.4"
+```
+
+说明：
+- 当 Gemini 调用失败（超时/网络/配额）时，会自动回退到模板生成，接口仍可用。
+
+## YOLOv8 本地训练（产出 best.pt）
+
+1. 准备数据集配置文件：
+   - 复制 `docs/berry_yolo_data.example.yaml`
+   - 重命名为 `data/processed/berry_yolo_data.yaml`
+   - 按你的实际数据目录修改 `path/train/val/test`
+
+2. 启动训练（默认输出到 `runs/yolo/berry-disease`）：
+
+```bash
+python -m visual_module.train_yolo \
+  --data data/processed/berry_yolo_data.yaml \
+  --model yolov8n.pt \
+  --device 0 \
+  --epochs 100 \
+  --batch 16 \
+  --imgsz 640
+```
+
+3. 训练完成后使用最佳权重进行后端推理：
+
+```powershell
+$env:YOLO_MODEL_PATH = "D:/0code/berry-mrag-system/runs/yolo/berry-disease/weights/best.pt"
+$env:YOLO_DEVICE = "cuda:0"
 uvicorn backend.main:app --reload --port 8000
 ```
 
@@ -127,6 +206,107 @@ curl -X POST "http://127.0.0.1:8000/api/diagnose" \
   -H "Content-Type: application/json" \
   -d "{\"query\":\"草莓叶片有白色粉末怎么办\",\"image_path\":\"demo_powder.jpg\"}"
 ```
+
+带过滤参数的调用示例（可选）：
+
+```json
+{
+  "query": "请给出防治方案",
+  "image_path": "D:/0code/berry-mrag-system/data/raw/strawberry_powdery_mildew.jpg",
+  "crop": "草莓",
+  "disease_hint": "powdery_mildew"
+}
+```
+
+## RAG 检索数据接入（本地 chunks）
+
+`rag_module/retriever.py` 已升级为本地知识块检索：
+- 优先读取 `data/chunks/*.json` 或 `data/chunks/*.jsonl`；
+- 若未提供 chunks，则回退读取 `docs/berry_manual.md`；
+- 若仍无可用数据，则回退到内置最小知识库；
+- 检索索引与向量缓存会落到 `data/vector_store/`。
+
+支持的 chunks 字段：`id`、`title`、`content`（至少要有 `content`）。
+
+`json` 示例（数组）：
+
+```json
+[
+  {
+    "id": "chunk-001",
+    "title": "草莓白粉病防治",
+    "content": "加强通风，发病初期按标签喷施三唑类药剂。"
+  }
+]
+```
+
+`jsonl` 示例（每行一个 JSON 对象）：
+
+```jsonl
+{"id":"chunk-001","title":"草莓白粉病防治","content":"加强通风，发病初期按标签喷施三唑类药剂。"}
+{"id":"chunk-002","title":"灰霉病管理","content":"清理病残体，控制湿度，开花期预防用药。"}
+```
+
+### 从手册自动生成 chunks
+
+可使用脚本将 `docs/berry_manual.md` 自动转为结构化 `jsonl`：
+
+```bash
+python -m rag_module.build_chunks \
+  --input docs/berry_manual.md \
+  --output data/chunks/berry_manual_chunks.jsonl
+```
+
+生成字段包括：`id/title/content/source/crop/disease_cn/disease_en/symptom/treatments/pesticide/dose/interval_days/keywords`。
+
+### 扩充 RAG 数据集（批量生成）
+
+可使用脚本批量生成扩充版知识块与评测问句：
+
+```bash
+python -m rag_module.generate_synthetic_rag_data \
+  --chunks-out data/chunks/rag_chunks_expanded.jsonl \
+  --eval-out docs/eval_queries.expanded.jsonl \
+  --docs-chunks-copy docs/rag_chunks_expanded.jsonl
+```
+
+默认生成规模：
+- chunks：90 条
+- eval_queries：180 条
+
+### 使用百炼 Embedding（Qwen3-Embedding）
+
+在环境变量中配置：
+
+```powershell
+$env:DASHSCOPE_API_KEY = "你的Key"
+$env:EMBEDDING_MODEL = "text-embedding-v4"
+$env:EMBEDDING_DIM = "1024"
+```
+
+说明：
+- `rag_module/embedder.py` 已支持通过 OpenAI 兼容接口调用百炼 Embedding。
+- 若接口不可用会自动回退到本地哈希向量（保证服务可用）。
+
+### RAG 离线评测（Recall/MRR/nDCG/延迟）
+
+1. 准备评测集（JSONL），可参考：`docs/eval_queries.example.jsonl`
+
+2. 运行评测脚本：
+
+```bash
+python -m rag_module.eval_retrieval \
+  --eval-file docs/eval_queries.example.jsonl \
+  --top-k 3 \
+  --mode both \
+  --use-rerank \
+  --out-json data/vector_store/eval_report.json \
+  --out-md docs/eval_report.md
+```
+
+3. 查看评测结果：
+- 汇总 JSON：`data/vector_store/eval_report.json`
+- 可读报告：`docs/eval_report.md`
 
 ## 🔁 系统流程图
 
@@ -187,7 +367,7 @@ FE --> U
 subgraph EDGE[边界情况 逻辑提示]
   E1[query 缺失 会被校验拦截]
   E2[知识库很小 命中弱 报告更泛]
-  E3[当前不真正读取图片 仅用文件名模拟]
+  E3[已支持本地 YOLOv8 推理 无法推理时回退到文件名模拟]
   E4[接真模型需增加 上传存储 模型加载 向量库管理]
 end
 
