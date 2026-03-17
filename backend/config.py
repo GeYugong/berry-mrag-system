@@ -1,6 +1,9 @@
 import os
 from dataclasses import dataclass
+from dotenv import load_dotenv
 
+# 加载项目根目录下的 .env 文件
+load_dotenv()
 
 @dataclass(frozen=True)
 class Settings:

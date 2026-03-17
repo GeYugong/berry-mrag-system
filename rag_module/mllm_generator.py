@@ -77,6 +77,10 @@ def _call_gemini(prompt: str) -> str:
     timeout_sec = float(os.getenv("GEMINI_TIMEOUT_SEC", "20"))
     temperature = float(os.getenv("GEMINI_TEMPERATURE", "0.4"))
 
+    # 支持从环境变量读取代理
+    proxy_url = os.getenv("GEMINI_PROXY", "").strip()
+    proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+
     url = f"{base_url}/models/{model}:generateContent?key={api_key}"
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -84,7 +88,9 @@ def _call_gemini(prompt: str) -> str:
             "temperature": temperature,
         },
     }
-    resp = requests.post(url, json=payload, timeout=timeout_sec)
+
+    # 使用代理进行请求
+    resp = requests.post(url, json=payload, timeout=timeout_sec, proxies=proxies)
     resp.raise_for_status()
     data = resp.json()
     candidates = data.get("candidates", [])
@@ -103,10 +109,19 @@ def generate_markdown_report(
     contexts: List[Dict[str, object]],
 ) -> str:
     provider = os.getenv("GEN_PROVIDER", "template").strip().lower()
+    print(f"[DEBUG] Current GEN_PROVIDER: {provider}")
+    
     if provider == "gemini":
         try:
             prompt = _build_prompt(user_query, detection, contexts)
-            return _call_gemini(prompt)
-        except Exception:
+            print("[DEBUG] Calling Gemini API...")
+            result = _call_gemini(prompt)
+            print("[DEBUG] Gemini call successful.")
+            return result
+        except Exception as e:
+            print(f"[DEBUG] Gemini Error: {str(e)}")
+            print("[DEBUG] Falling back to template...")
             return _fallback_markdown(user_query, detection, contexts)
+    
+    print("[DEBUG] Using default template...")
     return _fallback_markdown(user_query, detection, contexts)
