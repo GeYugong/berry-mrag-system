@@ -32,18 +32,23 @@
 
 ```text
 berry-mrag-system/
+├── backend/                      # FastAPI 后端服务
+├── rag_module/                   # RAG（embedding/retriever/reranker/generator）
+├── visual_module/                # 视觉模块（YOLO 推理/训练）
+├── frontend/                     # 前端目录
 ├── data/
-│   ├── raw/               # 原始数据（预留）
-│   ├── processed/         # 处理后数据（预留）
-│   ├── chunks/            # 文本块数据（预留）
-│   └── vector_store/      # 向量库存储（预留）
-├── docs/                  # 项目文档
-├── visual_module/         # 视觉诊断模块
-├── rag_module/            # 检索增强生成模块
-├── backend/               # FastAPI 后端服务
-├── frontend/              # 前端目录（预留）
-├── requirements.txt       # 环境依赖
-└── UPDATE_LOG.md          # Codex 追加式更新日志
+│   ├── raw/                       # 原始图片与上传文件
+│   ├── processed/                 # 处理后数据与 YOLO 数据集配置
+│   ├── chunks/                    # RAG 知识块（json/jsonl）
+│   └── vector_store/              # 向量缓存与评测输出
+├── docs/                          # 项目文档与评测报告
+├── runs/                          # YOLO 训练产物目录
+├── tests/                         # 测试目录（预留）
+├── .env.example                   # 环境变量模板
+├── requirements.txt               # 运行依赖
+├── requirements-dev.txt           # 开发/测试依赖
+├── README.md
+└── UPDATE_LOG.md                  # 追加式更新日志
 
 ```
 
@@ -65,6 +70,8 @@ cd berry-mrag-system
 conda create -n berry-mrag python=3.10
 conda activate berry-mrag
 pip install -r requirements.txt
+# 可选：开发与测试依赖
+pip install -r requirements-dev.txt
 
 ```
 
