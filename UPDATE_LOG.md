@@ -787,3 +787,46 @@
 ### 下一步任务
 1. 配置有效 Gemini Key 后，执行一次 `/api/diagnose` 真实生成链路联调。
 2. 增加生成阶段日志（provider/耗时/是否回退）用于线上诊断。
+
+---
+
+## 2026-03-17 第 21 次更新
+
+- 执行者：Codex
+- 更新类型：RAG 数据集批量扩充（chunks + eval queries）
+
+### 更新内容
+1. 新增批量数据生成脚本：
+   - 新增 `rag_module/generate_synthetic_rag_data.py`。
+   - 可一次性生成扩充版知识块与评测问句。
+
+2. 执行生成并落盘：
+   - `data/chunks/rag_chunks_expanded.jsonl`（90 条）
+   - `docs/rag_chunks_expanded.jsonl`（90 条，跟踪副本）
+   - `docs/eval_queries.expanded.jsonl`（180 条）
+
+3. 评测脚本增强：
+   - `rag_module/eval_retrieval.py` 新增 `--max-queries` 参数，便于抽样评测。
+
+4. 文档补充：
+   - `README.md` 新增“扩充 RAG 数据集（批量生成）”命令说明。
+
+### 涉及文件/模块
+- `rag_module/generate_synthetic_rag_data.py`
+- `rag_module/eval_retrieval.py`
+- `README.md`
+- `UPDATE_LOG.md`
+- 生成产物：`data/chunks/rag_chunks_expanded.jsonl`、`docs/rag_chunks_expanded.jsonl`、`docs/eval_queries.expanded.jsonl`
+
+### 验证结果
+- 生成脚本运行成功：`chunks=90`、`eval_queries=180`。
+- 文件抽样检查通过（字段齐全：`crop/disease_en/keywords/dose/interval_days`）。
+- 抽样评测（30 条）已产出：`docs/eval_report_expanded.md`、`data/vector_store/eval_report_expanded.json`。
+
+### 已知问题
+- 使用在线 embedding 时，首次评测会触发全量向量构建，耗时较长（首条请求显著慢于后续请求）。
+- 当前扩充数据为规则合成数据，后续应混入真实生产问句与专家标注金标。
+
+### 下一步任务
+1. 将扩充评测集按病害类别分组评估，输出分组指标。
+2. 基于低分 query 建立失败样例回流表，迭代 rerank 规则与 prompt。

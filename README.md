@@ -259,6 +259,21 @@ python -m rag_module.build_chunks \
 
 生成字段包括：`id/title/content/source/crop/disease_cn/disease_en/symptom/treatments/pesticide/dose/interval_days/keywords`。
 
+### 扩充 RAG 数据集（批量生成）
+
+可使用脚本批量生成扩充版知识块与评测问句：
+
+```bash
+python -m rag_module.generate_synthetic_rag_data \
+  --chunks-out data/chunks/rag_chunks_expanded.jsonl \
+  --eval-out docs/eval_queries.expanded.jsonl \
+  --docs-chunks-copy docs/rag_chunks_expanded.jsonl
+```
+
+默认生成规模：
+- chunks：90 条
+- eval_queries：180 条
+
 ### 使用百炼 Embedding（Qwen3-Embedding）
 
 在环境变量中配置：

@@ -46,6 +46,12 @@ def _parse_args() -> argparse.Namespace:
         default="docs/eval_report.md",
         help="Output markdown report path.",
     )
+    parser.add_argument(
+        "--max-queries",
+        type=int,
+        default=0,
+        help="Evaluate at most N queries (0 means all).",
+    )
     return parser.parse_args()
 
 
@@ -237,6 +243,8 @@ def _render_markdown(report: Dict[str, object], out_path: Path) -> None:
 def main() -> None:
     args = _parse_args()
     dataset = _load_eval_data(Path(args.eval_file))
+    if args.max_queries and args.max_queries > 0:
+        dataset = dataset[: args.max_queries]
 
     report: Dict[str, object] = {}
     if args.mode in ("filtered", "both"):
