@@ -16,6 +16,8 @@ class Settings:
     yolo_business_conf: float = float(os.getenv("YOLO_BUSINESS_CONF", "0.45"))
     embedding_model: str = os.getenv("EMBEDDING_MODEL", "text-embedding-v4")
     embedding_dim: int = int(os.getenv("EMBEDDING_DIM", "1024"))
+    gen_provider: str = os.getenv("GEN_PROVIDER", "template")
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 
 settings = Settings()

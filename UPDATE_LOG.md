@@ -747,3 +747,43 @@
 ### 下一步任务
 1. 扩充评测集到 30~100 条并按病害类别分组统计指标。
 2. 在 `reranker` 中加入“失败样例回流”机制，针对低分命中 query 进行规则迭代。
+
+---
+
+## 2026-03-17 第 20 次更新
+
+- 执行者：Codex
+- 更新类型：生成阶段升级为 Gemini（带模板回退）
+
+### 更新内容
+1. 升级 `rag_module/mllm_generator.py`：
+   - 新增 Gemini REST 调用逻辑（`generateContent`）。
+   - 保留模板渲染作为兜底，Gemini 失败时自动回退，保证接口可用性。
+   - 新增结构化 Prompt 组装，基于用户问题、视觉结果和检索上下文生成 Markdown。
+
+2. 配置项补充：
+   - `backend/config.py` 新增 `gen_provider`、`gemini_model` 字段。
+   - `.env.example` 新增 `GEN_PROVIDER/GEMINI_API_KEY/GEMINI_MODEL/GEMINI_TIMEOUT_SEC/GEMINI_TEMPERATURE` 等变量。
+
+3. 依赖补充与文档同步：
+   - `requirements.txt` 新增 `requests`。
+   - `README.md` 新增“生成阶段接入 Gemini（可选）”说明。
+
+### 涉及文件/模块
+- `rag_module/mllm_generator.py`
+- `backend/config.py`
+- `.env.example`
+- `requirements.txt`
+- `README.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法检查通过：`rag_module/mllm_generator.py`、`backend/config.py`
+- 回退路径验证通过：`GEN_PROVIDER=gemini` 且无 `GEMINI_API_KEY` 时，自动返回模板渲染结果。
+
+### 已知问题
+- 当前尚未在本环境执行真实 Gemini 在线调用验证（需有效 `GEMINI_API_KEY`）。
+
+### 下一步任务
+1. 配置有效 Gemini Key 后，执行一次 `/api/diagnose` 真实生成链路联调。
+2. 增加生成阶段日志（provider/耗时/是否回退）用于线上诊断。

@@ -155,6 +155,23 @@ $env:YOLO_BUSINESS_CONF = "0.45"
 uvicorn backend.main:app --reload --port 8000
 ```
 
+## 生成阶段接入 Gemini（可选）
+
+`rag_module/mllm_generator.py` 已支持：`Gemini 优先 + 模板回退`。
+
+配置示例（PowerShell）：
+
+```powershell
+$env:GEN_PROVIDER = "gemini"   # 不使用 Gemini 时可设为 template
+$env:GEMINI_API_KEY = "你的Google API Key"
+$env:GEMINI_MODEL = "gemini-2.5-flash"
+$env:GEMINI_TIMEOUT_SEC = "20"
+$env:GEMINI_TEMPERATURE = "0.4"
+```
+
+说明：
+- 当 Gemini 调用失败（超时/网络/配额）时，会自动回退到模板生成，接口仍可用。
+
 ## YOLOv8 本地训练（产出 best.pt）
 
 1. 准备数据集配置文件：
