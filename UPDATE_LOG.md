@@ -652,3 +652,47 @@
 ### 下一步任务
 1. 前端与 `/api/diagnose/upload` 完成联调，确认图片上传路径与字段一致。
 2. 后续切换自训练 `best.pt` 后复测三类病害识别效果。
+
+---
+
+## 2026-03-17 第 18 次更新
+
+- 执行者：Codex
+- 更新类型：RAG 离线评测脚本与指标报告落地
+
+### 更新内容
+1. 新增评测集示例：
+   - 新增 `docs/eval_queries.example.jsonl`（包含 query/crop/disease_hint/gold_doc_ids）。
+
+2. 新增离线评测脚本：
+   - 新增 `rag_module/eval_retrieval.py`。
+   - 支持评测模式：`filtered` / `unfiltered` / `both`。
+   - 输出指标：`Recall@K`、`MRR@K`、`nDCG@K`、平均延迟与 P95 延迟。
+   - 输出文件：JSON 报告与 Markdown 报告。
+
+3. 文档补充：
+   - `README.md` 新增“RAG 离线评测”使用说明与命令示例。
+
+4. 执行验证：
+   - 运行评测命令并生成：
+     - `data/vector_store/eval_report.json`
+     - `docs/eval_report.md`
+
+### 涉及文件/模块
+- `docs/eval_queries.example.jsonl`
+- `rag_module/eval_retrieval.py`
+- `README.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法检查通过：`rag_module/eval_retrieval.py`
+- 评测脚本运行成功并产出报告。
+- 当前示例集结果显示：`filtered` 模式下排序指标（MRR/nDCG）优于 `unfiltered`，证明过滤策略有效。
+
+### 已知问题
+- 当前评测集规模较小（示例 5 条），指标仅用于流程验证，不代表线上真实性能。
+- 延迟受 embedding API 网络波动影响明显，需在稳定环境重复采样。
+
+### 下一步任务
+1. 扩充离线评测集到 30~100 条，覆盖更多作物与病害问法。
+2. 在 `reranker` 中接入字段加权（title/crop/disease_en）并复测指标提升。

@@ -256,6 +256,25 @@ $env:EMBEDDING_DIM = "1024"
 - `rag_module/embedder.py` 已支持通过 OpenAI 兼容接口调用百炼 Embedding。
 - 若接口不可用会自动回退到本地哈希向量（保证服务可用）。
 
+### RAG 离线评测（Recall/MRR/nDCG/延迟）
+
+1. 准备评测集（JSONL），可参考：`docs/eval_queries.example.jsonl`
+
+2. 运行评测脚本：
+
+```bash
+python -m rag_module.eval_retrieval \
+  --eval-file docs/eval_queries.example.jsonl \
+  --top-k 3 \
+  --mode both \
+  --out-json data/vector_store/eval_report.json \
+  --out-md docs/eval_report.md
+```
+
+3. 查看评测结果：
+- 汇总 JSON：`data/vector_store/eval_report.json`
+- 可读报告：`docs/eval_report.md`
+
 ## 🔁 系统流程图
 
 ```mermaid
