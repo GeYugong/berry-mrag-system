@@ -256,9 +256,25 @@ def _ensure_index(dim: int) -> _IndexCache:
     return _INDEX_CACHE
 
 
+def _pack_item(item: Dict[str, object], score: float) -> Dict[str, object]:
+    keywords_val = item.get("keywords", [])
+    keywords = keywords_val if isinstance(keywords_val, list) else []
+    return {
+        "id": str(item.get("id", "")),
+        "title": str(item.get("title", "")),
+        "content": str(item.get("content", "")),
+        "score": round(float(score), 4),
+        "crop": str(item.get("crop", "")),
+        "disease_en": str(item.get("disease_en", "")),
+        "keywords": [str(x) for x in keywords],
+        "dose": str(item.get("dose", "")),
+        "interval_days": str(item.get("interval_days", "")),
+    }
+
+
 def _search_with_faiss(
     query_vector: List[float], top_k: int, cache: _IndexCache
-) -> List[Dict[str, Union[str, float]]]:
+) -> List[Dict[str, object]]:
     if cache.faiss_index is None or np is None:
         return []
 
@@ -266,36 +282,22 @@ def _search_with_faiss(
     faiss.normalize_L2(q)
     scores, indices = cache.faiss_index.search(q, top_k)
 
-    out: List[Dict[str, Union[str, float]]] = []
+    out: List[Dict[str, object]] = []
     for score, idx in zip(scores[0], indices[0]):
         if idx < 0 or idx >= len(cache.items):
             continue
         item = cache.items[int(idx)]
-        out.append(
-            {
-                "id": str(item.get("id", "")),
-                "title": str(item.get("title", "")),
-                "content": str(item.get("content", "")),
-                "score": round(float(score), 4),
-            }
-        )
+        out.append(_pack_item(item, score=float(score)))
     return out
 
 
 def _search_with_cosine(
     query_vector: List[float], top_k: int, cache: _IndexCache
-) -> List[Dict[str, Union[str, float]]]:
-    scored: List[Dict[str, Union[str, float]]] = []
+) -> List[Dict[str, object]]:
+    scored: List[Dict[str, object]] = []
     for item, item_vec in zip(cache.items, cache.vectors):
         score = _cosine_similarity(query_vector, item_vec)
-        scored.append(
-            {
-                "id": str(item.get("id", "")),
-                "title": str(item.get("title", "")),
-                "content": str(item.get("content", "")),
-                "score": round(score, 4),
-            }
-        )
+        scored.append(_pack_item(item, score=score))
     scored.sort(key=lambda x: float(x["score"]), reverse=True)
     return scored[:top_k]
 
@@ -335,7 +337,7 @@ def search(
     top_k: int = 3,
     crop: Optional[str] = None,
     disease_hint: Optional[str] = None,
-) -> List[Dict[str, Union[str, float]]]:
+) -> List[Dict[str, object]]:
     if top_k <= 0:
         return []
 

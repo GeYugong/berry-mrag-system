@@ -267,6 +267,7 @@ python -m rag_module.eval_retrieval \
   --eval-file docs/eval_queries.example.jsonl \
   --top-k 3 \
   --mode both \
+  --use-rerank \
   --out-json data/vector_store/eval_report.json \
   --out-md docs/eval_report.md
 ```

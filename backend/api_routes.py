@@ -44,7 +44,12 @@ def _process_diagnosis(
         crop=crop,
         disease_hint=effective_hint,
     )
-    reranked = rerank(retrieved, pest_type=str(detection["pest_type"]))
+    reranked = rerank(
+        retrieved,
+        pest_type=str(detection["pest_type"]),
+        crop=crop,
+        disease_hint=effective_hint,
+    )
     answer = generate_markdown_report(query, detection, reranked)
 
     resp = DiagnoseResponse(

@@ -696,3 +696,54 @@
 ### 下一步任务
 1. 扩充离线评测集到 30~100 条，覆盖更多作物与病害问法。
 2. 在 `reranker` 中接入字段加权（title/crop/disease_en）并复测指标提升。
+
+---
+
+## 2026-03-17 第 19 次更新
+
+- 执行者：Codex
+- 更新类型：Reranker 字段加权与离线评测对比增强
+
+### 更新内容
+1. 升级 `rag_module/reranker.py`：
+   - 将原先简单规则改为结构化加权规则。
+   - 加权维度：`disease_en`、`title`、`crop`、`keywords`、`dose`、`interval_days`。
+   - 支持参数：`pest_type` + 可选 `crop` + 可选 `disease_hint`。
+
+2. 检索结果补充结构化字段：
+   - 更新 `rag_module/retriever.py`，返回结果中附带 `crop/disease_en/keywords/dose/interval_days`（供 rerank 使用）。
+
+3. 路由联动：
+   - 更新 `backend/api_routes.py`，调用 `rerank` 时传入 `crop` 与 `disease_hint`。
+
+4. 离线评测增强：
+   - 重写 `rag_module/eval_retrieval.py`，新增 `--use-rerank` 开关。
+   - 报告新增 `Use Rerank` 标记，支持更直观的前后对比。
+
+5. 实际评测结果（示例集）：
+   - 在 `--use-rerank` 下，`unfiltered` 模式指标提升：
+     - `MRR@K`: `0.6333 -> 0.8667`
+     - `nDCG@K`: `0.7262 -> 0.9000`
+   - 报告已写入：`docs/eval_report.md` 与 `data/vector_store/eval_report.json`。
+
+### 涉及文件/模块
+- `rag_module/reranker.py`
+- `rag_module/retriever.py`
+- `backend/api_routes.py`
+- `rag_module/eval_retrieval.py`
+- `docs/eval_report.md`
+- `README.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法检查通过：`retriever/reranker/api_routes/eval_retrieval`。
+- `/api/diagnose` 实测返回正常，且在过滤条件下召回分数更聚焦。
+- 离线评测脚本成功运行并输出对比结果。
+
+### 已知问题
+- 当前示例评测集规模较小，指标仅说明策略方向有效，仍需扩大样本验证稳健性。
+- 延迟仍受 embedding API 网络波动影响。
+
+### 下一步任务
+1. 扩充评测集到 30~100 条并按病害类别分组统计指标。
+2. 在 `reranker` 中加入“失败样例回流”机制，针对低分命中 query 进行规则迭代。
