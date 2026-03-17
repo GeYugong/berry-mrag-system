@@ -622,3 +622,33 @@
 ### 下一步任务
 1. 在可联网环境执行 `python -m pytest -q tests`，闭环验证新增日志改动未引入回归。
 2. 补充真实 `TestClient` 集成测试，减少 monkeypatch 依赖。
+
+---
+
+## 2026-03-17 第 17 次更新
+
+- 执行者：Codex
+- 更新类型：上传接口依赖补全与端到端接口实测
+
+### 更新内容
+1. 依赖补全：
+   - `requirements.txt` 新增 `python-multipart>=0.0.20,<1.0`，用于 FastAPI `Form/File` 上传解析。
+
+2. 接口实测：
+   - 验证 `POST /api/diagnose`（JSON）可正常返回诊断结果。
+   - 验证 `POST /api/diagnose/upload`（multipart/form-data）可正常接收图片并返回诊断结果。
+
+### 涉及文件/模块
+- `requirements.txt`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- `/api/diagnose` 返回 200，包含 `detection/retrieved/answer_markdown`。
+- `/api/diagnose/upload` 返回 200，协议字段完整。
+
+### 已知问题
+- 当前使用通用权重时，病害类别仍可能回退为 `unknown_leaf_issue`，属于业务兜底预期行为。
+
+### 下一步任务
+1. 前端与 `/api/diagnose/upload` 完成联调，确认图片上传路径与字段一致。
+2. 后续切换自训练 `best.pt` 后复测三类病害识别效果。
