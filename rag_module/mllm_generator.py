@@ -48,20 +48,46 @@ def _build_prompt(
     context_lines: List[str] = []
     for idx, item in enumerate(contexts, start=1):
         context_lines.append(
-            f"[{idx}] title={item.get('title','')} score={item.get('score','')} content={item.get('content','')}"
+            f"[{idx}] 标题：{item.get('title','')} (相关性: {item.get('score','')})\n内容：{item.get('content','')}"
         )
 
-    context_block = "\n".join(context_lines) if context_lines else "无可用检索上下文"
+    context_block = "\n---\n".join(context_lines) if context_lines else "未发现直接相关的历史防治手册。"
+    
     return (
-        "你是农业病虫害诊断助手。请基于提供的检索证据生成中文 Markdown 报告。\n"
-        "要求：\n"
-        "1) 只能依据给定证据，不确定就明确说明。\n"
-        "2) 输出结构必须包含：诊断结果、检索依据、建议方案、注意事项。\n"
-        "3) 建议方案要可执行，包含优先级与复查建议。\n"
-        "4) 如涉及药剂，提醒按标签剂量与安全间隔期执行。\n\n"
-        f"用户问题：{user_query}\n"
-        f"视觉结果：pest_type={detection.get('pest_type')} confidence={detection.get('confidence')} bbox={detection.get('bbox')}\n"
-        f"检索证据：\n{context_block}\n"
+        "你是一名资深的智慧农业植物保护专家。请基于视觉诊断结果和检索到的知识库证据，为浆果种植户生成一份详尽、专业的中文 Markdown 诊断报告。\n\n"
+        "### 写作约束：\n"
+        "1. **结构化呈现**：必须严格遵循下方的[报告结构规范]。\n"
+        "2. **依据为本**：所有防治药剂和剂量必须优先参考检索证据中的内容。若证据不足，请结合农业常识提供建议并注明‘专家经验补充’。\n"
+        "3. **语气专业**：语气要冷静、严谨且充满人文关怀。使用专业的农技术语，但要配以通俗的解释。\n"
+        "4. **排版精美**：充分利用 Markdown 特性（加粗、列表、表格、Emoji）。\n\n"
+        "### [报告结构规范]：\n"
+        "## 📊 诊断综合概要\n"
+        "> (用一句话总结当前病害识别结果及其对作物的潜在威胁程度。)\n\n"
+        "## 🩺 视觉与症状解析\n"
+        "* **识别结果**：识别到 {pest_type}，视觉置信度为 {confidence}。\n"
+        "* **用户描述反馈**：针对用户提到的‘{user_query}’进行专业解读。\n"
+        "* **病理分析**：简述该病害的发病机理与当前症状的关联。\n\n"
+        "## 🛡️ 核心防治体系\n"
+        "### 1. 紧急处理方案 (Priority A)\n"
+        "(侧重于快速阻断蔓延的措施。)\n"
+        "### 2. 农业调控与生物防治 (Priority B)\n"
+        "(侧重于环境控制，如通风、湿度调节等。)\n\n"
+        "## 💊 推荐药剂与剂量参考\n"
+        "| 推荐药剂 | 建议剂量/倍数 | 安全间隔期 | 使用要点 |\n"
+        "| :--- | :--- | :--- | :--- |\n"
+        "(基于检索证据填充表格，若证据中无详细参数则保留空白并提醒查阅药剂说明书。)\n\n"
+        "## 🕒 后续管理与复查建议\n"
+        "(明确告知农户 3-7 天内应观察的特征及下一步动作。)\n\n"
+        "## ⚠️ 农业安全温馨提示\n"
+        "(强调农药混配禁忌、施药防护及环境保护要求。)\n\n"
+        "### [输入数据]：\n"
+        f"1. 用户问题：{user_query}\n"
+        f"2. 视觉指纹：pest_type={detection.get('pest_type')} confidence={detection.get('confidence')}\n"
+        f"3. 知识库检索证据：\n{context_block}\n"
+    ).format(
+        pest_type=detection.get('pest_type'),
+        confidence=f"{float(detection.get('confidence',0))*100:.1f}%",
+        user_query=user_query
     )
 
 
