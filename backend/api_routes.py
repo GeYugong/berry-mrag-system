@@ -1,4 +1,7 @@
 import shutil
+import time
+import uuid
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -13,14 +16,17 @@ from rag_module.retriever import search
 from visual_module.inference import run_inference
 
 router = APIRouter(prefix="/api", tags=["berry-mrag"])
+logger = logging.getLogger("berry_mrag.api")
 
 
 def _process_diagnosis(
+    request_id: str,
     query: str,
     image_path: Optional[str] = None,
     crop: Optional[str] = None,
     disease_hint: Optional[str] = None,
 ) -> DiagnoseResponse:
+    started = time.perf_counter()
     detection = run_inference(
         image_path,
         model_path=settings.yolo_model_path,
@@ -41,11 +47,22 @@ def _process_diagnosis(
     reranked = rerank(retrieved, pest_type=str(detection["pest_type"]))
     answer = generate_markdown_report(query, detection, reranked)
 
-    return DiagnoseResponse(
+    resp = DiagnoseResponse(
         detection=detection,  # type: ignore[arg-type]
         retrieved=reranked,  # type: ignore[arg-type]
         answer_markdown=answer,
     )
+    elapsed_ms = (time.perf_counter() - started) * 1000
+    logger.info(
+        "diagnose_ok request_id=%s elapsed_ms=%.2f pest_type=%s retrieved=%d crop=%s hint=%s",
+        request_id,
+        elapsed_ms,
+        detection.get("pest_type"),
+        len(reranked),
+        crop or "",
+        effective_hint,
+    )
+    return resp
 
 
 @router.get("/health")
@@ -55,7 +72,19 @@ def health() -> dict:
 
 @router.post("/diagnose", response_model=DiagnoseResponse)
 def diagnose(req: DiagnoseRequest) -> DiagnoseResponse:
-    return _process_diagnosis(req.query, req.image_path, req.crop, req.disease_hint)
+    request_id = uuid.uuid4().hex[:12]
+    logger.info("diagnose_start request_id=%s source=json", request_id)
+    try:
+        return _process_diagnosis(
+            request_id=request_id,
+            query=req.query,
+            image_path=req.image_path,
+            crop=req.crop,
+            disease_hint=req.disease_hint,
+        )
+    except Exception:
+        logger.exception("diagnose_failed request_id=%s source=json", request_id)
+        raise
 
 
 @router.post("/diagnose/upload", response_model=DiagnoseResponse)
@@ -65,6 +94,8 @@ async def diagnose_upload(
     crop: Optional[str] = Form(None),
     disease_hint: Optional[str] = Form(None),
 ) -> DiagnoseResponse:
+    request_id = uuid.uuid4().hex[:12]
+    logger.info("diagnose_start request_id=%s source=upload", request_id)
     image_path = None
     if file:
         save_dir = Path("data/raw")
@@ -74,4 +105,14 @@ async def diagnose_upload(
             with open(image_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
-    return _process_diagnosis(query, image_path, crop, disease_hint)
+    try:
+        return _process_diagnosis(
+            request_id=request_id,
+            query=query,
+            image_path=image_path,
+            crop=crop,
+            disease_hint=disease_hint,
+        )
+    except Exception:
+        logger.exception("diagnose_failed request_id=%s source=upload", request_id)
+        raise

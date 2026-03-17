@@ -515,8 +515,6 @@
 1. 在可安装依赖的终端执行 `pip install -r requirements.txt` 后运行 `python -m pytest -q tests`。
 2. 补充一条真实 `TestClient` 集成测试，不依赖 monkeypatch 的 `search` 返回。
 
----
-
 ## 2026-03-16 第 14 次更新
 
 - 执行者：Gemini CLI
@@ -579,3 +577,48 @@
 
 ### 下一步任务
 1. 启动全栈服务进行端到端实测验证。
+
+---
+
+## 2026-03-17 第 16 次更新（更正）
+
+- 执行者：Codex
+- 更新类型：后端配置模板与诊断日志增强（更正归位）
+
+### 更正说明
+- 先前同内容日志误写为“第 14 次更新”，与 Gemini CLI 第 14/15 次记录发生编号冲突。
+- 按当前顺序更正归位为“第 16 次更新”，并保留历史条目不删除（遵循追加式日志规则）。
+
+### 更新内容
+1. 新增环境变量模板：
+   - 新增仓库根目录 `.env.example`。
+   - 覆盖 App、YOLO、Embedding 关键配置项，便于多人协作统一环境。
+
+2. 诊断接口日志增强：
+   - `backend/api_routes.py` 为 `/api/diagnose` 与 `/api/diagnose/upload` 增加 `request_id`。
+   - 记录开始/成功/失败日志，并输出耗时（`elapsed_ms`）、`pest_type`、召回条数等关键信息。
+
+3. 日志级别配置：
+   - `backend/config.py` 增加 `LOG_LEVEL`。
+   - `backend/main.py` 增加统一 `logging.basicConfig` 初始化。
+
+4. 文档同步：
+   - `README.md` 修正 `.env.example` 现状说明。
+
+### 涉及文件/模块
+- `.env.example`
+- `backend/api_routes.py`
+- `backend/config.py`
+- `backend/main.py`
+- `README.md`
+- `UPDATE_LOG.md`
+
+### 验证结果
+- 语法检查通过：`backend/config.py`、`backend/main.py`、`backend/api_routes.py`
+
+### 已知问题
+- 当前测试运行仍受本机 `pytest` 依赖安装环境影响，完整自动化测试需在可安装依赖环境执行。
+
+### 下一步任务
+1. 在可联网环境执行 `python -m pytest -q tests`，闭环验证新增日志改动未引入回归。
+2. 补充真实 `TestClient` 集成测试，减少 monkeypatch 依赖。

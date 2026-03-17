@@ -68,7 +68,7 @@ pip install -r requirements.txt
 
 ```
 
-*(注：当前仓库尚未提供 `.env.example`，如需引入外部 API 密钥，请在后续版本补充配置模板并在此处更新说明。)*
+*(注：仓库已提供 `.env.example`，请复制为 `.env` 后按本机环境填写关键配置。)*
 
 
 

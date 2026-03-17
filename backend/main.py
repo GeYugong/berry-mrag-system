@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,6 +7,11 @@ from backend.api_routes import router
 from backend.config import settings
 
 app = FastAPI(title=settings.app_name, version=settings.app_version, debug=settings.debug)
+
+logging.basicConfig(
+    level=getattr(logging, settings.log_level.upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
 
 # Enable CORS
 app.add_middleware(
